@@ -2,8 +2,8 @@
 
 namespace Send\Sms;
 
-use Send\TaskBalance\Driver;
-use Send\TaskBalance\Task;
+use Toplan\TaskBalance\Driver;
+use Toplan\TaskBalance\Task;
 
 /**
  * Class Sms
