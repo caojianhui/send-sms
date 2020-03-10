@@ -110,7 +110,7 @@ class ParasiticAgent extends Agent implements ContentSms, TemplateSms, VoiceCode
     {
         if (!is_array(self::$methods)) {
             self::$methods = [];
-            $interfaces = class_implements('Toplan\\PhpSms\\ParasiticAgent');
+            $interfaces = class_implements('Send\\Sms\\ParasiticAgent');
             foreach ($interfaces as $interface) {
                 self::$methods = array_merge(self::$methods, get_class_methods($interface));
             }

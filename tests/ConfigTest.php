@@ -21,15 +21,15 @@ class ConfigTest extends PHPUnit_Framework_TestCase
         $this->assertCount(1, Sms::scheme());
         $this->assertEquals('80 backup', Sms::scheme('Log'));
 
-        Sms::scheme('Luosimao', 'backup');
+        Sms::scheme('ChuangRuiYun', 'backup');
         $this->assertCount(2, Sms::scheme());
 
         Sms::scheme([
-                'Luosimao' => '0 backup',
-                'YunPian'  => '0',
+                'ChuangRuiYun' => '100 backup',
+                'ChuangLan'  => '0',
             ]);
         $this->assertCount(3, Sms::scheme());
-        $this->assertEquals('0', Sms::scheme('YunPian'));
+        $this->assertEquals('100 backup', Sms::scheme('ChuangRuiYun'));
     }
 
     public function testAddAgentConfig()
@@ -38,29 +38,26 @@ class ConfigTest extends PHPUnit_Framework_TestCase
         $this->assertCount(1, Sms::config());
         $this->assertCount(0, Sms::config('Log'));
 
-        Sms::config('Luosimao', [
+        Sms::config('ChuangRuiYun', [
                 'apikey' => '123',
             ]);
         $this->assertCount(2, Sms::config());
-        $this->assertArrayHasKey('apikey', Sms::config('Luosimao'));
+        $this->assertArrayHasKey('apikey', Sms::config('ChuangRuiYun'));
 
         Sms::config([
-                'Luosimao' => [
-                    'apikey' => '123',
-                ],
-                'YunPian' => [
+                'ChuangRuiYun' => [
                     'apikey' => '123',
                 ],
             ]);
-        $this->assertCount(3, Sms::config());
+        $this->assertCount(2, Sms::config());
     }
 
     public function testUpdateAgentConfig()
     {
-        $agent = Sms::getAgent('Luosimao');
+        $agent = Sms::getAgent('ChuangRuiYun');
         $this->assertEquals('123', $agent->apikey);
 
-        Sms::config('Luosimao', [
+        Sms::config('ChuangRuiYun', [
             'apikey' => '12345',
             'data'   => 'hello world',
         ]);

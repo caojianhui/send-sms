@@ -29,9 +29,9 @@
     </testsuites>
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
-            <file>./src/phpsms/agents/Agent.php</file>
-            <file>./src/phpsms/agents/LogAgent.php</file>
-            <file>./src/phpsms/Sms.php</file>
+            <file>./src/sms/agents/Agent.php</file>
+            <file>./src/sms/agents/LogAgent.php</file>
+            <file>./src/sms/Sms.php</file>
         </whitelist>
     </filter>
     <logging>

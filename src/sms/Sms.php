@@ -157,7 +157,7 @@ class Sms
     /**
      * Configure.
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      */
     protected static function configure()
     {
@@ -168,7 +168,7 @@ class Sms
         $diff = array_diff_key(self::scheme(), self::$agentsConfig);
         self::initAgentsConfig(array_keys($diff), $config);
         if (!count(self::scheme())) {
-            throw new PhpSmsException('Expected at least one agent in scheme.');
+            throw new SmsException('Expected at least one agent in scheme.');
         }
     }
 
@@ -179,7 +179,7 @@ class Sms
      */
     protected static function initScheme(array &$config)
     {
-        $config = empty($config) ? include __DIR__ . '/../config/phpsms.php' : $config;
+        $config = empty($config) ? include __DIR__ . '/../config/sendsms.php' : $config;
         $scheme = isset($config['scheme']) ? $config['scheme'] : [];
         self::scheme($scheme);
     }
@@ -195,7 +195,7 @@ class Sms
         if (empty($agents)) {
             return;
         }
-        $config = empty($config) ? include __DIR__ . '/../config/phpsms.php' : $config;
+        $config = empty($config) ? include __DIR__ . '/../config/sendsms.php' : $config;
         $agentsConfig = isset($config['agents']) ? $config['agents'] : [];
         foreach ($agents as $name) {
             $agentConfig = isset($agentsConfig[$name]) ? $agentsConfig[$name] : [];
@@ -265,7 +265,7 @@ class Sms
      * @param string $name
      * @param array  $options
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      *
      * @return Agent
      */
@@ -280,7 +280,7 @@ class Sms
             if (isset($options['scheme'])) {
                 unset($options['scheme']);
             }
-            $className = "Toplan\\PhpSms\\{$name}Agent";
+            $className = "Send\\Sms\\{$name}Agent";
             if (isset($options['agentClass'])) {
                 $className = $options['agentClass'];
                 unset($options['agentClass']);
@@ -290,7 +290,7 @@ class Sms
             } elseif (class_exists($className)) {
                 self::$agents[$name] = new $className($config);
             } else {
-                throw new PhpSmsException("Not support agent `$name`.");
+                throw new SmsException("Not support agent `$name`.");
             }
         }
 
@@ -345,7 +345,7 @@ class Sms
      * @param string       $name
      * @param string|array $scheme
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      */
     protected static function modifyScheme($name, $scheme)
     {
@@ -372,7 +372,7 @@ class Sms
      * @param array|bool|null   $config
      * @param bool              $override
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      *
      * @return array
      */
@@ -398,7 +398,7 @@ class Sms
      * @param array  $config
      * @param bool   $override
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      */
     protected static function modifyConfig($name, array $config, $override = false)
     {
@@ -422,12 +422,12 @@ class Sms
      *
      * @param string $name
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      */
     protected static function validateAgentName($name)
     {
         if (empty($name) || !is_string($name) || preg_match('/^[0-9]+$/', $name)) {
-            throw new PhpSmsException('Expected the name of agent to be a string which except the digital string.');
+            throw new SmsException('Expected the name of agent to be a string which except the digital string.');
         }
     }
 
@@ -519,14 +519,14 @@ class Sms
      *
      * @param $type
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      *
      * @return $this
      */
     public function type($type)
     {
         if ($type !== self::TYPE_SMS && $type !== self::TYPE_VOICE) {
-            throw new PhpSmsException('Expected the parameter equals to `Sms::TYPE_SMS` or `Sms::TYPE_VOICE`.');
+            throw new SmsException('Expected the parameter equals to `Sms::TYPE_SMS` or `Sms::TYPE_VOICE`.');
         }
         $this->smsData['type'] = $type;
 
@@ -655,14 +655,14 @@ class Sms
      *
      * @param string $name
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      *
      * @return $this
      */
     public function agent($name)
     {
         if (!is_string($name) || empty($name)) {
-            throw new PhpSmsException('Expected the parameter to be non-empty string.');
+            throw new SmsException('Expected the parameter to be non-empty string.');
         }
         $this->firstAgent = $name;
 
@@ -695,14 +695,14 @@ class Sms
     /**
      * Push to the queue system.
      *
-     * @throws \Exception | PhpSmsException
+     * @throws \Exception | SmsException
      *
      * @return mixed
      */
     public function push()
     {
         if (!is_callable(self::$howToUseQueue)) {
-            throw new PhpSmsException('Expected define how to use the queue system by methods `queue`.');
+            throw new SmsException('Expected define how to use the queue system by methods `queue`.');
         }
         try {
             $this->pushedToQueue = true;
@@ -736,7 +736,7 @@ class Sms
      * @param string $name
      * @param array  $args
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      */
     public static function __callStatic($name, $args)
     {
@@ -745,7 +745,7 @@ class Sms
         $name = $name === 'beforeAgentSend' ? 'beforeDriverRun' : $name;
         $name = $name === 'afterAgentSend' ? 'afterDriverRun' : $name;
         if (!in_array($name, self::$availableHooks)) {
-            throw new PhpSmsException("Not found methods `$name`.");
+            throw new SmsException("Not found methods `$name`.");
         }
         $handler = $args[0];
         $override = isset($args[1]) ? (bool) $args[1] : false;
@@ -758,7 +758,7 @@ class Sms
      * @param string $name
      * @param array  $args
      *
-     * @throws PhpSmsException
+     * @throws SmsException
      * @throws \Exception
      */
     public function __call($name, $args)

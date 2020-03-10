@@ -11,7 +11,7 @@ class SmsTest extends PHPUnit_Framework_TestCase
         Sms::cleanScheme();
         Sms::scheme([
             'Log'      => '10',
-            'ChuangRuiyun' => '10',
+            'ChuangRuiYun' => '10',
         ]);
         self::$sms = Sms::make();
     }
@@ -34,8 +34,8 @@ class SmsTest extends PHPUnit_Framework_TestCase
     {
         $agent = Sms::getAgent('Log');
         $this->assertInstanceOf('Send\Sms\LogAgent', $agent);
-        $ChuangRuiyun = Sms::getAgent('ChuangRuiyun');
-        $this->assertInstanceOf('Send\Sms\ChuangRuiyunAgent', $ChuangRuiyun);
+        $ChuangRuiYun = Sms::getAgent('ChuangRuiYun');
+        $this->assertInstanceOf('Send\Sms\ChuangRuiYunAgent', $ChuangRuiYun);
     }
 
     public function testGetTask()
@@ -66,19 +66,19 @@ class SmsTest extends PHPUnit_Framework_TestCase
 
     public function testSetTemplate()
     {
-        self::$sms->template('ChuangRuiyun', 'test');
+        self::$sms->template('ChuangRuiYun', '123');
         $smsData = self::$sms->all();
         $this->assertEquals([
-                'ChuangRuiyun' => '123',
+                'ChuangRuiYun' => '123',
             ], $smsData['templates']);
         self::$sms->template([
-                'ChuangRuiyun'   => '1234',
-                'YunTongXun' => '6789',
+                'ChuangRuiYun'   => '1234',
+                'ChuangLan' => '6789',
             ]);
         $smsData = self::$sms->all();
         $this->assertEquals([
-            'ChuangRuiyun'   => '1234',
-            'Chuanglan' => '6789',
+            'ChuangRuiYun'   => '1234',
+            'ChuangLan' => '6789',
         ], $smsData['templates']);
     }
 

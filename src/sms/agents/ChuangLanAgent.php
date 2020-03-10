@@ -43,7 +43,6 @@ class ChuangLanAgent extends Agent implements ContentSms, MarketSms
 
     protected function request(array $params)
     {
-        $params = $this->createParams($params);
         $result = $this->curlPost(self::$sendUrl, [], [
             CURLOPT_POSTFIELDS => http_build_query($params),
         ]);
