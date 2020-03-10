@@ -1,6 +1,6 @@
 <?php
 
-namespace Toplan\PhpSms;
+namespace Send\Sms;
 
 use Illuminate\Support\ServiceProvider;
 use Laravel\Lumen\Application as LumenApplication;
