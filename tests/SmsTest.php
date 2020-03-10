@@ -1,6 +1,6 @@
 <?php
 
-use Toplan\PhpSms\Sms;
+use Send\Sms\Sms;
 
 class SmsTest extends PHPUnit_Framework_TestCase
 {
@@ -11,14 +11,14 @@ class SmsTest extends PHPUnit_Framework_TestCase
         Sms::cleanScheme();
         Sms::scheme([
             'Log'      => '10',
-            'Luosimao' => '0',
+            'ChuangRuiyun' => '10',
         ]);
         self::$sms = Sms::make();
     }
 
     public function testMakeSms()
     {
-        $this->assertInstanceOf('Toplan\PhpSms\Sms', self::$sms);
+        $this->assertInstanceOf('Send\Sms\Sms', self::$sms);
     }
 
     public function testHasAgent()
@@ -33,9 +33,9 @@ class SmsTest extends PHPUnit_Framework_TestCase
     public function testGetAgent()
     {
         $agent = Sms::getAgent('Log');
-        $this->assertInstanceOf('Toplan\PhpSms\LogAgent', $agent);
-        $luosimao = Sms::getAgent('Luosimao');
-        $this->assertInstanceOf('Toplan\PhpSms\LuosimaoAgent', $luosimao);
+        $this->assertInstanceOf('Send\Sms\LogAgent', $agent);
+        $ChuangRuiyun = Sms::getAgent('ChuangRuiyun');
+        $this->assertInstanceOf('Send\Sms\ChuangRuiyunAgent', $ChuangRuiyun);
     }
 
     public function testGetTask()
@@ -60,25 +60,25 @@ class SmsTest extends PHPUnit_Framework_TestCase
 
     public function testSetTo()
     {
-        self::$sms->to('18280345...');
-        $this->assertEquals('18280345...', self::$sms->all('to'));
+        self::$sms->to('13521442493');
+        $this->assertEquals('13521442493', self::$sms->all('to'));
     }
 
     public function testSetTemplate()
     {
-        self::$sms->template('Luosimao', '123');
+        self::$sms->template('ChuangRuiyun', 'test');
         $smsData = self::$sms->all();
         $this->assertEquals([
-                'Luosimao' => '123',
+                'ChuangRuiyun' => '123',
             ], $smsData['templates']);
         self::$sms->template([
-                'Luosimao'   => '1234',
+                'ChuangRuiyun'   => '1234',
                 'YunTongXun' => '6789',
             ]);
         $smsData = self::$sms->all();
         $this->assertEquals([
-            'Luosimao'   => '1234',
-            'YunTongXun' => '6789',
+            'ChuangRuiyun'   => '1234',
+            'Chuanglan' => '6789',
         ], $smsData['templates']);
     }
 

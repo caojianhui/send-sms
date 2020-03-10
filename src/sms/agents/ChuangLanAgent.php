@@ -1,22 +1,25 @@
 <?php
 
 namespace Send\Sms;
-class ChuangRuiYun extends Agent implements TemplateSms, ContentSms
+
+
+class ChuangLanAgent extends Agent implements ContentSms, MarketSms
 {
-    protected static $sendCodeUrl = 'http://api.1cloudsp.com/api/v2/single_send';
-    protected static $groupSendUrl = 'http://api.1cloudsp.com/api/v2/send';
+    //发送短信接口URL
+    protected $sendUrl = 'http://smsbj1.253.com/msg/send/json';
 
     /**
      * @param array|string $to
-     * @param int|string $tempId
-     * @param array $tempData
-     * 发送模版消息
+     * @param string $content
+     * 发送普通短信
      */
-    public function sendTemplateSms($to, $tempId, array $tempData)
+    public function sendContentSms($to, $content)
     {
         $params = [
-            'templateId' => $tempId,
-            'mobile' => $to,
+            'account' => $this->config(['notice']['account']),
+            'password' => $this->config(['notice']['password']),
+            'msg' => $this->config(['sign']).$content,
+            'to' => $to,
         ];
         $this->request($params);
     }
@@ -24,13 +27,16 @@ class ChuangRuiYun extends Agent implements TemplateSms, ContentSms
     /**
      * @param array|string $to
      * @param string $content
-     * 发送营销内容短信
+     * @param array $data
+     * 发送营销短信
      */
-    public function sendContentSms($to, $content)
+    public function sendMarketSms($to, $content, array $data)
     {
         $params = [
-            'mobile' => $to,
-            'content' => $content,
+            'account' => $this->config(['market']['account']),
+            'password' => $this->config(['market']['password']),
+            'msg' => $this->config(['sign']).$content,
+            'to' => $to,
         ];
         $this->request($params);
     }
@@ -38,12 +44,7 @@ class ChuangRuiYun extends Agent implements TemplateSms, ContentSms
     protected function request(array $params)
     {
         $params = $this->createParams($params);
-        if (strpos($params['mobile'], ',') !== false) {
-            $url = self::$groupSendUrl;
-        } else {
-            $url = self::$sendCodeUrl;
-        }
-        $result = $this->curlPost($url, [], [
+        $result = $this->curlPost(self::$sendUrl, [], [
             CURLOPT_POSTFIELDS => http_build_query($params),
         ]);
         $this->setResult($result);
@@ -60,8 +61,8 @@ class ChuangRuiYun extends Agent implements TemplateSms, ContentSms
             $this->result(Agent::CODE, $result['code']);
             if ($result['code'] === 0) {
                 $this->result(Agent::SUCCESS, true);
-            }else{
-                $this->result(Agent::INFO,$result['msg']);
+            } else {
+                $this->result(Agent::INFO, $result['errorMsg']);
             }
         } else {
             $this->result(Agent::INFO, 'request failed');

@@ -24,7 +24,7 @@ class SerializeTest extends PHPUnit_Framework_TestCase
         Sms::afterSend(function () {
             print_r('[_after_send_]');
         }, true);
-        self::$sms = Sms::make()->to('18280354...')->content('content...');
+        self::$sms = Sms::make()->to('13521442493')->content('content...');
     }
 
     public function testSerialize()

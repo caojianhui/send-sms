@@ -1,25 +1,22 @@
 <?php
 
 namespace Send\Sms;
-
-
-class ChuangLan extends Agent implements ContentSms, MarketSms
+class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms
 {
-    //发送短信接口URL
-    protected $sendUrl = 'http://smsbj1.253.com/msg/send/json';
+    protected static $sendCodeUrl = 'http://api.1cloudsp.com/api/v2/single_send';
+    protected static $groupSendUrl = 'http://api.1cloudsp.com/api/v2/send';
 
     /**
      * @param array|string $to
-     * @param string $content
-     * 发送普通短信
+     * @param int|string $tempId
+     * @param array $tempData
+     * 发送模版消息
      */
-    public function sendContentSms($to, $content)
+    public function sendTemplateSms($to, $tempId, array $tempData)
     {
         $params = [
-            'account' => $this->config(['notice']['account']),
-            'password' => $this->config(['notice']['password']),
-            'msg' => $this->config(['sign']).$content,
-            'to' => $to,
+            'templateId' => $tempId,
+            'mobile' => $to,
         ];
         $this->request($params);
     }
@@ -27,16 +24,13 @@ class ChuangLan extends Agent implements ContentSms, MarketSms
     /**
      * @param array|string $to
      * @param string $content
-     * @param array $data
-     * 发送营销短信
+     * 发送营销内容短信
      */
-    public function sendMarketSms($to, $content, array $data)
+    public function sendContentSms($to, $content)
     {
         $params = [
-            'account' => $this->config(['market']['account']),
-            'password' => $this->config(['market']['password']),
-            'msg' => $this->config(['sign']).$content,
-            'to' => $to,
+            'mobile' => $to,
+            'content' => $content,
         ];
         $this->request($params);
     }
@@ -44,7 +38,12 @@ class ChuangLan extends Agent implements ContentSms, MarketSms
     protected function request(array $params)
     {
         $params = $this->createParams($params);
-        $result = $this->curlPost(self::$sendUrl, [], [
+        if (strpos($params['mobile'], ',') !== false) {
+            $url = self::$groupSendUrl;
+        } else {
+            $url = self::$sendCodeUrl;
+        }
+        $result = $this->curlPost($url, [], [
             CURLOPT_POSTFIELDS => http_build_query($params),
         ]);
         $this->setResult($result);
@@ -61,8 +60,8 @@ class ChuangLan extends Agent implements ContentSms, MarketSms
             $this->result(Agent::CODE, $result['code']);
             if ($result['code'] === 0) {
                 $this->result(Agent::SUCCESS, true);
-            } else {
-                $this->result(Agent::INFO, $result['errorMsg']);
+            }else{
+                $this->result(Agent::INFO,$result['msg']);
             }
         } else {
             $this->result(Agent::INFO, 'request failed');
