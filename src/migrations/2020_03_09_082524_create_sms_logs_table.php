@@ -21,23 +21,18 @@ class CreateSmsLogsTable extends Migration
                 $table->string('to')->default('')->comment('用于存储手机号');
 
                 //temp_id:存储模板标记，用于存储任何第三方服务商提供的短信模板标记/id
-                $table->string('temp_id')->default('')->comment('第三方代理器模版ID');
-
-                //data:模板短信的模板数据，建议json格式
-                $table->string('data')->default('')->comment('模版短信数据，json格式');
-
+                $table->string('temp_id')->default(null)->nullable()->comment('第三方代理器模版ID');
                 //content:内容
-                $table->string('content')->default('')->comment('短信内容');
-
+                $table->text('content')->default(null)->comment('短信内容');
                 //voice_code:语言验证码code
-                $table->string('voice_code')->default('')->comment('语音验证码');
-                $table->tinyInteger('status')->default(0)->comment('发送短信状态：0发起1成功2失败');
+                $table->string('voice_code')->default(null)->nullable()->comment('语音验证码');
+
+                $table->tinyInteger('status')->default(1)->comment('发送短信状态：1成功2失败');
+                //代理器名称
                 $table->string('agents', 50)->default(0)->comment('代理器名称，config配置代理器名称');
-                //发送状态改变时的时间
-                $table->integer('sent_time')->unsigned()->default(0);
 
                 //代理器使用日志，记录每个代理器的发送状态，可用于排错
-                $table->text('result_info')->nullable();
+                $table->text('result_info')->nullable()->comment('返回结果');
 
                 $table->timestamps();
                 $table->softDeletes();

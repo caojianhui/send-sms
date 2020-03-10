@@ -59,7 +59,7 @@ class AgentTest extends PHPUnit_Framework_TestCase
 
     public function testSendTemplateSms()
     {
-        $this->agent->sendSms('18280111111', null, 'template_id', []);
+        $this->agent->sendSms('13521442493', null, 'template_id', []);
         $r = $this->agent->result();
         $this->assertTrue($r['success']);
         $this->assertEquals('send template sms success', $r['info']);
@@ -67,7 +67,7 @@ class AgentTest extends PHPUnit_Framework_TestCase
 
     public function testSendContentSms()
     {
-        $this->agent->sendSms('18280111111', 'content', 0, []);
+        $this->agent->sendSms('13521442493', 'content', 0, []);
         $r = $this->agent->result();
         $this->assertTrue($r['success']);
         $this->assertEquals('send content sms success', $r['info']);
@@ -75,7 +75,7 @@ class AgentTest extends PHPUnit_Framework_TestCase
 
     public function testSendVoice()
     {
-        $this->agent->sendVoice('18280111111', null, 0, [], '1111');
+        $this->agent->sendVoice('13521442493', null, 0, [], '1111');
         $r = $this->agent->result();
         $this->assertTrue($r['success']);
     }
@@ -93,11 +93,11 @@ class AgentTest extends PHPUnit_Framework_TestCase
                 $agent->result(Agent::CODE, $code);
             },
         ]);
-        $parasiticAgent->sendSms('18280111111', 'parasitic_sms_content');
+        $parasiticAgent->sendSms('13521442493', 'parasitic_sms_content');
         $this->assertEquals('parasitic_sms_content', $parasiticAgent->result('info'));
-        $this->assertEquals('18280111111', $parasiticAgent->result('code'));
+        $this->assertEquals('13521442493', $parasiticAgent->result('code'));
 
-        $parasiticAgent->sendVoice('18280111111', null, null, [], '2222');
+        $parasiticAgent->sendVoice('13521442493', null, null, [], '2222');
         $this->assertEquals('parasitic_voice_verify', $parasiticAgent->result('info'));
         $this->assertEquals('2222', $parasiticAgent->result('code'));
     }

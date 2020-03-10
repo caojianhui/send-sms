@@ -24,9 +24,15 @@ return [
     'scheme' => [
         'Log',
         //被使用概率为0
-        'ChuangLan'=>'0',
+        'ChuangLan'=>'100',
         //被使用概率为100，且为备用代理器
-        'ChuangRuiYun'=>'20 backup'
+//        'ChuangRuiYun'=>'100 backup'
+    
+    ],
+    'log' => [
+        //日志记录渠道：file(日志目录),database(数据表存储)
+        'channel' => env('SENDSMS_LOG_CHANNEL', 'file'),
+        'file' => env('SENDSMS_LOG_FILE', storage_path('logs/sendsms.log')),
     ],
 
     /*
@@ -48,13 +54,13 @@ return [
         'ChuangLan' => [
             // 验证码通知短信账号
             'notice' => [
-                'account' => 'your_account',
-                'password' => 'your_password'
+                'account' => 'N9709875',
+                'password' => 'FS7tTA3H9Ldb68'
             ],
             // 会员营销短信账号
             'market' => [
-                'account' => 'your_account',
-                'password' => 'your_password'
+                'account' => 'M3093430',
+                'password' => '40DZmBSkFlba44'
             ],
             'sign'=>'【舒适到家】'
         ],
@@ -67,9 +73,9 @@ return [
         * support templete sms.
         */
         'ChuangRuiYun' => [
-            'accesskey' => 'your_accesskey',
-            'secret' => 'your_secret',
-            'sign' => 'your_sign',
+            'accesskey' => 'tak0hv7pW5lN6ATV',
+            'secret' => 'Ucp4X3ClFQn8Yk2VsB2bfUeOUja6O1mr',
+            'sign' => '144311',
         ],
         /*
          * -----------------------------------

@@ -7,6 +7,8 @@ abstract class Agent
     const SUCCESS = 'success';
     const INFO = 'info';
     const CODE = 'code';
+    const LOG_FILE_CHANNEL = 'file';
+    const LOG_DATABASE_CHANNEL = 'database';
 
     /**
      * The configuration information.
@@ -110,6 +112,7 @@ abstract class Agent
         }elseif($data && $this instanceof MarketSms){
             $this->sendMarketSms($to, $content,$data);
         }
+        
     }
 
     /**
@@ -177,7 +180,6 @@ abstract class Agent
         if (!array_key_exists(CURLOPT_POSTFIELDS, $options)) {
             $options[CURLOPT_POSTFIELDS] = $this->params($params);
         }
-
         return self::curl($options);
     }
 
@@ -224,14 +226,18 @@ abstract class Agent
         foreach ($opts as $key => $value) {
             curl_setopt($ch, $key, $value);
         }
-
+        if(array_key_exists(CURLOPT_HTTPHEADER, $opts)){
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen(json_encode($opts[CURLOPT_HTTPHEADER])))
+            );
+        }
         $response = curl_exec($ch);
         $request = $response !== false;
         if (!$request) {
             $response = curl_getinfo($ch);
         }
         curl_close($ch);
-
         return compact('request', 'response');
     }
 
@@ -280,4 +286,6 @@ abstract class Agent
     {
         return isset($this->config[$name]);
     }
+    
+    
 }

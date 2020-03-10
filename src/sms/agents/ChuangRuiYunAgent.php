@@ -4,8 +4,7 @@ namespace Send\Sms;
 
 class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms
 {
-    protected static $sendCodeUrl = 'http://api.1cloudsp.com/api/v2/single_send';
-    protected static $groupSendUrl = 'http://api.1cloudsp.com/api/v2/send';
+    protected static $sendCodeUrl = 'http://api.1cloudsp.com/api/v2/send';
 
     /**
      * @param array|string $to
@@ -18,7 +17,14 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms
         $params = [
             'templateId' => $tempId,
             'mobile' => $to,
+            'tempId'=>$tempId,
+            'accesskey'=>$this->config('accesskey'),
+            'secret'=>$this->config('secret'),
+            'sign'=>$this->config('sign'),
         ];
+        if(!empty($tempData)){
+            $params = array_merge($tempData,$params);
+        }
         $this->request($params);
     }
 
@@ -32,13 +38,16 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms
         $params = [
             'mobile' => $to,
             'content' => $content,
+            'accesskey'=>$this->config('accesskey'),
+            'secret'=>$this->config('secret'),
+            'sign'=>$this->config('sign'),
         ];
         $this->request($params);
     }
 
     protected function request(array $params)
     {
-        if (strpos($params['mobile'], ',') !== false) {
+        if (strpos($params['mobile'], ',') !== false && !isset($params['tempId'])) {
             $url = self::$groupSendUrl;
         } else {
             $url = self::$sendCodeUrl;
@@ -67,4 +76,6 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms
             $this->result(Agent::INFO, 'request failed');
         }
     }
+    
+    
 }
