@@ -1,0 +1,38 @@
+{
+    "name": "send/sms",
+    "description": "创蓝和创瑞云接口整合",
+    "type": "library",
+    "authors": [
+        {
+            "name": "cjh",
+            "email": "1373805779@qq.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "toplan/task-balancer": "~0.5"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~4.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Send\\Sms\\": [
+                "src/sms/",
+                "src/sms/agents/",
+                "src/sms/interfaces/"
+            ],
+            "Send\\Sms\\Facades\\": [
+                "src/sms/facades/"
+            ]
+        },
+        "classmap": [
+            "src/sms/lib/"
+        ]
+    },
+    "autoload-dev": {
+        "classmap": [
+            "tests/"
+        ]
+    }
+}
