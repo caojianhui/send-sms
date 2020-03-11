@@ -2,6 +2,12 @@
 
 namespace Send\Sms;
 
+
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+
 abstract class Agent
 {
     const SUCCESS = 'success';
@@ -49,8 +55,8 @@ abstract class Agent
     {
         $this->result = [
             self::SUCCESS => false,
-            self::INFO    => null,
-            self::CODE    => 0,
+            self::INFO => null,
+            self::CODE => 0,
         ];
     }
 
@@ -58,8 +64,8 @@ abstract class Agent
      * Get or set the configuration information.
      *
      * @param string|array $key
-     * @param mixed        $value
-     * @param bool         $override
+     * @param mixed $value
+     * @param bool $override
      *
      * @return mixed
      */
@@ -76,8 +82,8 @@ abstract class Agent
      * Get or set the custom params.
      *
      * @param string|array $key
-     * @param mixed        $value
-     * @param bool         $override
+     * @param mixed $value
+     * @param bool $override
      *
      * @return mixed
      */
@@ -109,10 +115,10 @@ abstract class Agent
             $this->sendTemplateSms($to, $tempId, $data);
         } elseif ($content && $this instanceof ContentSms) {
             $this->sendContentSms($to, $content);
-        }elseif($data && $this instanceof MarketSms){
-            $this->sendMarketSms($to, $content,$data);
+        } elseif ($data && $this instanceof MarketSms) {
+            $this->sendMarketSms($to, $content, $data);
         }
-        
+
     }
 
     /**
@@ -169,8 +175,8 @@ abstract class Agent
     public function curlPost($url, array $params = [], array $opts = [])
     {
         $options = [
-            CURLOPT_POST    => true,
-            CURLOPT_URL     => $url,
+            CURLOPT_POST => true,
+            CURLOPT_URL => $url,
         ];
         foreach ($opts as $key => $value) {
             if ($key !== CURLOPT_POST && $key !== CURLOPT_URL) {
@@ -226,7 +232,7 @@ abstract class Agent
         foreach ($opts as $key => $value) {
             curl_setopt($ch, $key, $value);
         }
-        if(array_key_exists(CURLOPT_HTTPHEADER, $opts)){
+        if (array_key_exists(CURLOPT_HTTPHEADER, $opts)) {
             curl_setopt($ch, CURLOPT_HTTPHEADER, array(
                     'Content-Type: application/json',
                     'Content-Length: ' . strlen(json_encode($opts[CURLOPT_HTTPHEADER])))
@@ -286,6 +292,31 @@ abstract class Agent
     {
         return isset($this->config[$name]);
     }
-    
-    
+
+
+    public function log($data)
+    {
+        $config = config('sendsms.log');
+        if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
+            if (Schema::hasTable('sms_logs')) {
+                if (strpos($data['to'], ',') !== false) {
+                    $mobiles = explode(',',$data['to']);
+                    collect($mobiles)->map(function ($item)use ($data){
+                        $data['to'] = $item;
+                        DB::table('sms_logs')->insert($data);
+                    });
+                }
+            }
+        } elseif ($config['channel'] == self::LOG_FILE_CHANNEL) {
+            $file = $config['file'];
+            if (!file_exists($file)) {
+                fopen($file, "w");
+            }
+            $log = new Logger($config['filename']);
+            $log->pushHandler(new StreamHandler($file, Logger::INFO));
+            $log->addInfo(json_encode($data, true));
+        }
+    }
+
+
 }

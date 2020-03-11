@@ -24,15 +24,16 @@ return [
     'scheme' => [
         'Log',
         //被使用概率为0
-        'ChuangLan'=>'100',
+        'ChuangLan'=>'10',
         //被使用概率为100，且为备用代理器
-//        'ChuangRuiYun'=>'100 backup'
+//        'ChuangRuiYun'=>'10 backup'
 
     ],
     'log' => [
         //日志记录渠道：file(日志目录),database(数据表存储)
-        'channel' => env('SENDSMS_LOG_CHANNEL', 'file'),
+        'channel' => env('SENDSMS_LOG_CHANNEL', 'database'),
         'file' => env('SENDSMS_LOG_FILE', storage_path('logs/sendsms.log')),
+        'filename'=>env('SENDSMS_LOG_FILENAME', 'sendSmsLog'),
     ],
 
     /*
@@ -62,7 +63,7 @@ return [
                 'account' => 'your_account',
                 'password' => 'your_password'
             ],
-            'sign'=>'【测试标签】'
+            'sign'=>'【测试签名】'
         ],
         /*
         * -----------------------------------

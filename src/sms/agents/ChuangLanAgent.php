@@ -16,6 +16,7 @@ class ChuangLanAgent extends Agent implements ContentSms, MarketSms, LogSms
     //发送短信接口URL
     protected static $sendUrl = 'http://smsbj1.253.com/msg/send/json';
     protected $agent = 'ChuangLan';
+    protected $unsubscribe = '退订T';
 
     /**
      * @param array|string $to
@@ -25,9 +26,9 @@ class ChuangLanAgent extends Agent implements ContentSms, MarketSms, LogSms
     public function sendContentSms($to, $content)
     {
         $params = [
-            'account' => $this->config('notice')['account'],
-            'password' => $this->config('notice')['password'],
-            'msg' => urlencode(($this->config('sign') . $content)),
+            'account' => config('sendsms.agents.' . $this->agent . '.notice.account'),
+            'password' => config('sendsms.agents.' . $this->agent . '.notice.password'),
+            'msg' => urlencode((config('sendsms.agents.' . $this->agent . '.sign') . $content.$this->unsubscribe)),
             'phone' => $to,
         ];
         $this->request($params);
@@ -41,10 +42,11 @@ class ChuangLanAgent extends Agent implements ContentSms, MarketSms, LogSms
      */
     public function sendMarketSms($to, $content, array $data)
     {
+
         $params = [
-            'account' => $this->config('market')['account'],
-            'password' => $this->config('market')['password'],
-            'msg' => urlencode(($this->config('sign') . $content)),
+            'account' => config('sendsms.agents.' . $this->agent . '.notice.account'),
+            'password' => config('sendsms.agents.' . $this->agent . '.notice.password'),
+            'msg' => urlencode((config('sendsms.agents.' . $this->agent . '.sign') . $content.$this->unsubscribe)),
             'phone' => $to,
         ];
         $this->request($params);
@@ -83,27 +85,17 @@ class ChuangLanAgent extends Agent implements ContentSms, MarketSms, LogSms
 
     public function sendLogSms(array $params, array $result)
     {
-        $config = config('sendsms.log');
         $data = [
             'to' => $params['phone'],
             'content' => $params['msg'],
             'status' => $result['code'] == 0 ? 1 : 2,
             'agents' => $this->agent,
+            'params' => json_encode($params),
             'result_info' => json_encode($result),
         ];
-        if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
-            if (Schema::hasTable('sms_logs')) {
-                return DB::table('sms_logs')->insert($data);
-            }
-        } elseif ($config['channel'] == self::LOG_FILE_CHANNEL) {
-            $file = $config['file'];
-            if (!file_exists($file)) {
-                fopen($file, "w");
-            }
-            $log = new Logger('sendSmsLog');
-            $log->pushHandler(new StreamHandler($file, Logger::INFO));
-            $log->addInfo(json_encode($data, true));
+        if(isset($params['tenant_id'])){
+            $data['tenant_id'] = $params['tenant_id'];
         }
-
+        $this->log($data);
     }
 }
