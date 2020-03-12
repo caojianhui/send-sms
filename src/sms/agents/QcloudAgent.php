@@ -29,7 +29,7 @@ class QcloudAgent extends Agent implements TemplateSms, ContentSms, VoiceCode, C
         return count($list) === 1 ? array_pop($list) : array_values($list);
     }
 
-    public function sendContentSms($to, $content)
+    public function sendContentSms($to, $content,array $data)
     {
         $params = [
             'type'   => 0, // 0:普通短信 1:营销短信

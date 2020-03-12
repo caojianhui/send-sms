@@ -7,7 +7,7 @@ namespace Send\Sms;
  */
 class LogAgent extends Agent implements TemplateSms, ContentSms, VoiceCode
 {
-    public function sendContentSms($to, $content)
+    public function sendContentSms($to, $content,array $data)
     {
         $this->result(Agent::SUCCESS, true);
         $this->result(Agent::INFO, 'send content sms success');

@@ -11,7 +11,7 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
 
-class ChuangLanAgent extends Agent implements ContentSms, MarketSms, LogSms
+class ChuangLanAgent extends Agent implements ContentSms, LogSms
 {
     //发送短信接口URL
     protected static $sendUrl = 'http://smsbj1.253.com/msg/send/json';
@@ -21,36 +21,24 @@ class ChuangLanAgent extends Agent implements ContentSms, MarketSms, LogSms
     /**
      * @param array|string $to
      * @param string $content
-     * 发送普通短信
+     * 发送普通短信/或营销短信
      */
-    public function sendContentSms($to, $content)
+    public function sendContentSms($to, $content, array $data)
     {
         $params = [
             'account' => config('sendsms.agents.' . $this->agent . '.notice.account'),
             'password' => config('sendsms.agents.' . $this->agent . '.notice.password'),
-            'msg' => urlencode((config('sendsms.agents.' . $this->agent . '.sign') . $content.$this->unsubscribe)),
+            'msg' => urlencode((config('sendsms.agents.' . $this->agent . '.sign') . $content . $this->unsubscribe)),
             'phone' => $to,
         ];
+        if (!empty($data)){
+            isset($data['tenant_id'])?$params['tenant_id']=$data['tenant_id']:'';
+            isset($data['type'])?$params['account'] =  config('sendsms.agents.' . $this->agent . '.market.account'):'';
+            isset($data['type'])?$params['password'] =  config('sendsms.agents.' . $this->agent . '.market.account'):'';
+        }
         $this->request($params);
     }
-
-    /**
-     * @param array|string $to
-     * @param string $content
-     * @param array $data
-     * 发送营销短信
-     */
-    public function sendMarketSms($to, $content, array $data)
-    {
-
-        $params = [
-            'account' => config('sendsms.agents.' . $this->agent . '.notice.account'),
-            'password' => config('sendsms.agents.' . $this->agent . '.notice.password'),
-            'msg' => urlencode((config('sendsms.agents.' . $this->agent . '.sign') . $content.$this->unsubscribe)),
-            'phone' => $to,
-        ];
-        $this->request($params);
-    }
+    
 
     protected function request(array $params)
     {
@@ -93,7 +81,7 @@ class ChuangLanAgent extends Agent implements ContentSms, MarketSms, LogSms
             'params' => json_encode($params),
             'result_info' => json_encode($result),
         ];
-        if(isset($params['tenant_id'])){
+        if (isset($params['tenant_id'])) {
             $data['tenant_id'] = $params['tenant_id'];
         }
         $this->log($data);

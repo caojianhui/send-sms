@@ -24,8 +24,9 @@ class ParasiticAgent extends Agent implements ContentSms, TemplateSms, VoiceCode
      *
      * @param string|array $to
      * @param string       $content
+     * array $data
      */
-    public function sendContentSms($to, $content)
+    public function sendContentSms($to, $content,array $data)
     {
         $this->handle(__FUNCTION__, func_get_args());
     }

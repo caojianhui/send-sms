@@ -38,7 +38,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      * @param string $content
      * 发送营销内容短信
      */
-    public function sendContentSms($to, $content)
+    public function sendContentSms($to, $content,array $data)
     {
         $params = [
             'mobile' => $to,
@@ -47,6 +47,9 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             'secret' => config('sendsms.agents.' . $this->agent . '.secret'),
             'sign' => config('sendsms.agents.' . $this->agent . '.sign'),
         ];
+        if (!empty($tempData)) {
+            $params = array_merge($tempData, $params);
+        }
         $this->request($params);
     }
 

@@ -114,9 +114,7 @@ abstract class Agent
         if ($tempId && $this instanceof TemplateSms) {
             $this->sendTemplateSms($to, $tempId, $data);
         } elseif ($content && $this instanceof ContentSms) {
-            $this->sendContentSms($to, $content);
-        } elseif ($data && $this instanceof MarketSms) {
-            $this->sendMarketSms($to, $content, $data);
+            $this->sendContentSms($to, $content,$data);
         }
 
     }
