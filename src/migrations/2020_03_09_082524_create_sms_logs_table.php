@@ -18,7 +18,7 @@ class CreateSmsLogsTable extends Migration
                 $table->bigIncrements('id');
 
                 //to:用于存储手机号
-                $table->string('to')->default('')->comment('用于存储手机号');
+                $table->text('to')->default('')->comment('用于存储手机号，多个以逗号分割');
 
                 //temp_id:存储模板标记，用于存储任何第三方服务商提供的短信模板标记/id
                 $table->string('temp_id')->default(null)->nullable()->comment('第三方代理器模版ID');

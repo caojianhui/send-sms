@@ -114,7 +114,7 @@ abstract class Agent
         if ($tempId && $this instanceof TemplateSms) {
             $this->sendTemplateSms($to, $tempId, $data);
         } elseif ($content && $this instanceof ContentSms) {
-            $this->sendContentSms($to, $content,$data);
+            $this->sendContentSms($to, $content, $data);
         }
 
     }
@@ -297,13 +297,17 @@ abstract class Agent
         $config = config('sendsms.log');
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
             if (Schema::hasTable('sms_logs')) {
-                if (strpos($data['to'], ',') !== false) {
-                    $mobiles = explode(',',$data['to']);
-                    collect($mobiles)->map(function ($item)use ($data){
-                        $data['to'] = $item;
-                        DB::table('sms_logs')->insert($data);
-                    });
-                }
+//                if (strpos($data['to'], ',') !== false) {
+//                    $mobiles = explode(',', $data['to']);
+//                    collect($mobiles)->map(function ($item) use ($data) {
+//                        $data['to'] = $item;
+//                        DB::table('sms_logs')->insert($data);
+//                    });
+//                    DB::table('sms_logs')->insert($data);
+//
+//                }
+                DB::table('sms_logs')->insert($data);
+
             }
         } elseif ($config['channel'] == self::LOG_FILE_CHANNEL) {
             $file = $config['file'];
