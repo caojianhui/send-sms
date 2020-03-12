@@ -18,7 +18,6 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      */
     public function sendTemplateSms($to, $tempId, array $tempData)
     {
-
         $params = [
             'templateId' => $tempId,
             'mobile' => $to,
@@ -30,7 +29,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         if (!empty($tempData)) {
             $params = array_merge($tempData, $params);
         }
-        $this->request($params);
+        $this->request($params,self::$sendCodeUrl);
     }
 
     /**
@@ -50,16 +49,11 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         if (!empty($tempData)) {
             $params = array_merge($tempData, $params);
         }
-        $this->request($params);
+        $this->request($params,self::$groupSendUrl);
     }
 
-    protected function request(array $params)
+    protected function request(array $params,$url)
     {
-        if (strpos($params['mobile'], ',') !== false && !isset($params['tempId'])) {
-            $url = self::$groupSendUrl;
-        } else {
-            $url = self::$sendCodeUrl;
-        }
         $result = $this->curlPost($url, [], [
             CURLOPT_POSTFIELDS => http_build_query($params),
         ]);
