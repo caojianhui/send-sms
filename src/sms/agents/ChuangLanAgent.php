@@ -38,7 +38,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms
         }
         $this->request($params);
     }
-    
+
 
     protected function request(array $params)
     {
@@ -55,13 +55,14 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms
      */
     protected function setResult($result, $params)
     {
+
         if ($result['request']) {
             $this->sendLogSms($params, json_decode($result['response'], true));
 
             $this->result(Agent::INFO, $result['response']);
             $result = json_decode($result['response'], true);
             $this->result(Agent::CODE, $result['code']);
-            if ($result['code'] === 0) {
+            if ($result['code'] == '0') {
                 $this->result(Agent::SUCCESS, true);
             } else {
                 $this->result(Agent::INFO, $result['errorMsg']);

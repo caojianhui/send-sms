@@ -24,9 +24,10 @@ return [
     'scheme' => [
         'Log',
         //被使用概率为0
-        'ChuangLan'=>'10',
+//        'ChuangLan'=>'10',
+//        'ChuangLan'=>'10 backup',
         //被使用概率为100，且为备用代理器
-//        'ChuangRuiYun'=>'10 backup'
+        'ChuangRuiYun'=>'100'
 
     ],
     'log' => [

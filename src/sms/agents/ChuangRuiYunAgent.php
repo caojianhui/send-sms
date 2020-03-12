@@ -63,19 +63,20 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         $result = $this->curlPost($url, [], [
             CURLOPT_POSTFIELDS => http_build_query($params),
         ]);
-        $this->setResult($result);
+        $this->setResult($result,$params);
     }
 
     /**
      * @param $result
      */
-    protected function setResult($result)
+    protected function setResult($result,$params)
     {
         if ($result['request']) {
+            $this->sendLogSms($params, json_decode($result['response'], true));
             $this->result(Agent::INFO, $result['response']);
             $result = json_decode($result['response'], true);
             $this->result(Agent::CODE, $result['code']);
-            if ($result['code'] === 0) {
+            if ($result['code'] == '0') {
                 $this->result(Agent::SUCCESS, true);
             } else {
                 $this->result(Agent::INFO, $result['msg']);
