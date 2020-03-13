@@ -306,6 +306,7 @@ abstract class Agent
 //                    DB::table('sms_logs')->insert($data);
 //
 //                }
+                $data['created_at'] = date('Y-m-d H:i:s');
                 DB::table('sms_logs')->insert($data);
 
             }
