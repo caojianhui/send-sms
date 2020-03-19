@@ -1,3 +1,6 @@
 .idea/
 composer.lock
 vendor/
+src/config/sendsms_copy.php
+.DS_Store
+src/.DS_Store

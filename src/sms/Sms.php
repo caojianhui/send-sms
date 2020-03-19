@@ -13,6 +13,11 @@ class Sms
 {
     const TYPE_SMS = 1;
     const TYPE_VOICE = 2;
+    const TYPE_BATCH = 3;
+
+    const INTERFACE_TYPE_SMS = 1;//短信接口
+    const INTERFACE_TYPE_REPORT = 2;//获取短信状态接口
+    const INTERFACE_TYPE_BALANCE = 3;//获取短信余额接口
 
     /**
      * Task instance.
@@ -74,14 +79,15 @@ class Sms
      * @var array
      */
     protected $smsData = [
-        'type'      => self::TYPE_SMS,
-        'to'        => null,
+        'type' => self::TYPE_SMS,
+        'interface' => self::INTERFACE_TYPE_SMS,
+        'to' => null,
         'templates' => [],
-        'data'      => [],
-        'content'   => null,
-        'code'      => null,
-        'files'     => [],
-        'params'    => [],
+        'data' => [],
+        'content' => null,
+        'code' => null,
+        'files' => [],
+        'params' => [],
     ];
 
     /**
@@ -206,7 +212,7 @@ class Sms
     /**
      * register driver.
      *
-     * @param string       $name
+     * @param string $name
      * @param string|array $scheme
      */
     protected static function registerDriver($name, $scheme)
@@ -224,10 +230,18 @@ class Sms
             $template = isset($templates[$driver->name]) ? $templates[$driver->name] : null;
             $file = isset($files[$driver->name]) ? $files[$driver->name] : null;
             $params = isset($params[$driver->name]) ? $params[$driver->name] : [];
-            if ($type === self::TYPE_VOICE) {
-                $agent->sendVoice($to, $content, $template, $data, $code, $file, $params);
-            } elseif ($type === self::TYPE_SMS) {
-                $agent->sendSms($to, $content, $template, $data, $params);
+            if ($interface===self::INTERFACE_TYPE_REPORT){
+                $agent->getReports($params);
+            }elseif($interface===self::INTERFACE_TYPE_SMS){
+                if ($type === self::TYPE_VOICE) {
+                    $agent->sendVoice($to, $content, $template, $data, $code, $file, $params);
+                } elseif ($type === self::TYPE_SMS) {
+                    $agent->sendSms($to, $content, $template, $data, $params);
+                } elseif ($type === self::TYPE_BATCH) {
+                    $agent->sendBatch($data);
+                }
+            }elseif($interface===self::INTERFACE_TYPE_BALANCE){
+                $agent->getBalance($params);
             }
             $result = $agent->result();
             if ($result['success']) {
@@ -263,11 +277,11 @@ class Sms
      * Get the agent instance by name.
      *
      * @param string $name
-     * @param array  $options
-     *
-     * @throws SmsException
+     * @param array $options
      *
      * @return Agent
+     * @throws SmsException
+     *
      */
     public static function getAgent($name, array $options = [])
     {
@@ -312,9 +326,9 @@ class Sms
     /**
      * Set or get the dispatch scheme.
      *
-     * @param string|array|null      $name
+     * @param string|array|null $name
      * @param string|array|bool|null $scheme
-     * @param bool                   $override
+     * @param bool $override
      *
      * @return mixed
      */
@@ -342,7 +356,7 @@ class Sms
     /**
      * Modify the dispatch scheme of agent.
      *
-     * @param string       $name
+     * @param string $name
      * @param string|array $scheme
      *
      * @throws SmsException
@@ -369,12 +383,12 @@ class Sms
      * Set or get the configuration information.
      *
      * @param string|array|null $name
-     * @param array|bool|null   $config
-     * @param bool              $override
-     *
-     * @throws SmsException
+     * @param array|bool|null $config
+     * @param bool $override
      *
      * @return array
+     * @throws SmsException
+     *
      */
     public static function config($name = null, $config = null, $override = false)
     {
@@ -395,8 +409,8 @@ class Sms
      * Modify the configuration information.
      *
      * @param string $name
-     * @param array  $config
-     * @param bool   $override
+     * @param array $config
+     * @param bool $override
      *
      * @throws SmsException
      */
@@ -493,7 +507,7 @@ class Sms
      * and define how to use it.
      *
      * @param bool|\Closure|null $enable
-     * @param \Closure|null      $handler
+     * @param \Closure|null $handler
      *
      * @return bool
      */
@@ -506,7 +520,7 @@ class Sms
             $handler = $enable;
             $enable = true;
         }
-        self::$enableQueue = (bool) $enable;
+        self::$enableQueue = (bool)$enable;
         if (is_callable($handler)) {
             self::$howToUseQueue = $handler;
         }
@@ -519,18 +533,31 @@ class Sms
      *
      * @param $type
      *
+     * @return $this
      * @throws SmsException
      *
-     * @return $this
      */
     public function type($type)
     {
-        if ($type !== self::TYPE_SMS && $type !== self::TYPE_VOICE) {
-            throw new SmsException('Expected the parameter equals to `Sms::TYPE_SMS` or `Sms::TYPE_VOICE`.');
+        if ($type !== self::TYPE_SMS && $type !== self::TYPE_VOICE && $type !== self::TYPE_BATCH) {
+            throw new SmsException('Expected the parameter equals to `Sms::TYPE_SMS` or `Sms::TYPE_VOICE`,or `Sms::TYPE_BATCH`.');
         }
         $this->smsData['type'] = $type;
 
         return $this;
+    }
+
+    /**
+     * @param $report
+     * @return $this
+     * @throws SmsException
+     */
+    public function report($report)
+    {
+
+        $this->smsData['report'] = $report;
+        return $this;
+
     }
 
     /**
@@ -559,7 +586,7 @@ class Sms
      */
     public function content($content)
     {
-        $this->smsData['content'] = trim((string) $content);
+        $this->smsData['content'] = trim((string)$content);
 
         return $this;
     }
@@ -612,7 +639,7 @@ class Sms
      * Set voice file.
      *
      * @param string|array $name
-     * @param string|int   $id
+     * @param string|int $id
      *
      * @return $this
      */
@@ -626,9 +653,9 @@ class Sms
     /**
      * Set params of agent.
      *
-     * @param string|array    $name
+     * @param string|array $name
      * @param array|bool|null $params
-     * @param bool            $override
+     * @param bool $override
      *
      * @return $this
      */
@@ -655,9 +682,9 @@ class Sms
      *
      * @param string $name
      *
+     * @return $this
      * @throws SmsException
      *
-     * @return $this
      */
     public function agent($name)
     {
@@ -692,12 +719,31 @@ class Sms
         return $this->push();
     }
 
+
+    /**
+     * @param bool $immediately
+     * @return bool|mixed
+     * @throws SmsException
+     * 拉取远程状态
+     */
+    public function report($immediately = false)
+    {
+        if (!self::$enableQueue || $this->pushedToQueue) {
+            $immediately = true;
+        }
+        if ($immediately) {
+            return self::$task->data($this->all())->run($this->firstAgent);
+        }
+
+        return $this->push();
+    }
+
     /**
      * Push to the queue system.
      *
+     * @return mixed
      * @throws \Exception | SmsException
      *
-     * @return mixed
      */
     public function push()
     {
@@ -734,7 +780,7 @@ class Sms
      * Define the static hook methods by overload static method.
      *
      * @param string $name
-     * @param array  $args
+     * @param array $args
      *
      * @throws SmsException
      */
@@ -748,7 +794,7 @@ class Sms
             throw new SmsException("Not found methods `$name`.");
         }
         $handler = $args[0];
-        $override = isset($args[1]) ? (bool) $args[1] : false;
+        $override = isset($args[1]) ? (bool)$args[1] : false;
         self::getTask()->hook($name, $handler, $override);
     }
 
@@ -756,7 +802,7 @@ class Sms
      * Define the hook methods by overload method.
      *
      * @param string $name
-     * @param array  $args
+     * @param array $args
      *
      * @throws SmsException
      * @throws \Exception
@@ -828,7 +874,7 @@ class Sms
      */
     protected static function serializeHandlers()
     {
-        $hooks = (array) self::getTask()->handlers;
+        $hooks = (array)self::getTask()->handlers;
         foreach ($hooks as &$handlers) {
             foreach (array_keys($handlers) as $key) {
                 self::toggleSerializeClosure($handlers, $key);
@@ -859,7 +905,7 @@ class Sms
     /**
      * Serialize or deserialize the specified closure and then replace the original value.
      *
-     * @param array      $options
+     * @param array $options
      * @param int|string $key
      */
     protected static function toggleSerializeClosure(array &$options, $key)
@@ -869,7 +915,7 @@ class Sms
         }
         $serializer = Util::getClosureSerializer();
         if (is_callable($options[$key])) {
-            $options[$key] = (string) $serializer->serialize($options[$key]);
+            $options[$key] = (string)$serializer->serialize($options[$key]);
         } elseif (is_string($options[$key])) {
             $options[$key] = $serializer->unserialize($options[$key]);
         }

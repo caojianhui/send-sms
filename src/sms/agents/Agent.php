@@ -3,6 +3,7 @@
 namespace Send\Sms;
 
 
+use http\Client;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Monolog\Handler\StreamHandler;
@@ -11,6 +12,7 @@ use Monolog\Logger;
 abstract class Agent
 {
     const SUCCESS = 'success';
+    const DATA = [];
     const INFO = 'info';
     const CODE = 'code';
     const LOG_FILE_CHANNEL = 'file';
@@ -57,6 +59,7 @@ abstract class Agent
             self::SUCCESS => false,
             self::INFO => null,
             self::CODE => 0,
+            self::DATA=>[],
         ];
     }
 
@@ -119,6 +122,20 @@ abstract class Agent
 
     }
 
+
+    /**
+     * @param array $data
+     * @return mixed
+     * 批量发送异步请求
+     */
+    public function sendBatch(array $data)
+    {
+        $this->reset();
+        if ($data && $this instanceof ClientSms) {
+            return $this->sendClientSms($data);
+        }
+    }
+
     /**
      * Voice send process.
      *
@@ -144,6 +161,28 @@ abstract class Agent
             $this->sendVoiceCode($to, $code);
         } elseif ($content && $this instanceof ContentVoice) {
             $this->sendContentVoice($to, $content);
+        }
+    }
+
+    /**
+     * @param array $params
+     * 拉取短信状态接口
+     */
+    public function getReports(array $params)
+    {
+        $this->reset();
+        $this->params($params, true);
+        if ($params && $this instanceof ReportSms) {
+            $this->getReportSms($params);
+        }
+    }
+
+    public function getBalance(array $params)
+    {
+        $this->reset();
+        $this->params($params, true);
+        if ($params && $this instanceof BalanceSms) {
+            $this->getBalanceSms($params);
         }
     }
 
@@ -304,11 +343,9 @@ abstract class Agent
 //                        DB::table('sms_logs')->insert($data);
 //                    });
 //                    DB::table('sms_logs')->insert($data);
-//
 //                }
                 $data['created_at'] = date('Y-m-d H:i:s');
                 DB::table('sms_logs')->insert($data);
-
             }
         } elseif ($config['channel'] == self::LOG_FILE_CHANNEL) {
             $file = $config['file'];
