@@ -191,8 +191,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      * @return mixed|void
      * 记录日志
      */
-    public
-    function getReportSms(array $params)
+    public function getReportSms(array $params)
     {
         $data = $params['msgids'];
         $client = new Client();
@@ -201,12 +200,12 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             $total = collect($data)->count() / 100;
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getAccount();
-                yield new Request('post', self::$sendUrl, [], json_encode($info, true));
+                yield new Request('post', self::$reportUrl, [], json_encode($info, true));
             }
         };
         $pool = new Pool($client, $requests($data), [
             'concurrency' => config('sendsms.scheme.concurrency'),
-            'fulfilled' => function ($response, $index) use ($data,$type) {
+            'fulfilled' => function ($response, $index) use ($data, $type) {
                 // this is delivered each successful response
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
                 $config = config('sendsms.log');
@@ -214,15 +213,18 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                     $re = json_decode($result['data'], true);
                     if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
                         foreach ($re as $item) {
-                            $msgid = $type==self::TYPE_MARKET?$item['batchId']:$item['smUuid'];
-                            DB::where('agent', $this->agent)->where('msgid',$msgid)
-                                ->update(['result_status' => $item['status']]);
+                            $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
+                            $data = [
+                                'update_at' => date('Y-m-d H:i:s'),
+                                'result_status' => $item['deliverResult'] ?? '',
+                            ];
+                            DB::where('agent', $this->agent)->where('msgid', $msgid)
+                                ->update($data);
                         }
                     }
                 }
             },
             'rejected' => function ($reason, $index) {
-                // this is delivered each failed request
                 $this->result(Agent::INFO, $reason);
             },
         ]);
@@ -240,6 +242,4 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         $account = $this->_getAccount();
         $this->request($account, self::$balanceUrl);
     }
-
-
 }

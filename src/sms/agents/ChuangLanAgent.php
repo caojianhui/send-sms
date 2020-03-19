@@ -171,8 +171,12 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                     $re = json_decode($result['result'], true);
                     if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
                         foreach ($re as $item) {
+                            $data = [
+                                'update_at' => date('Y-m-d H:i:s'),
+                                'result_status' => $item['status'] ?? '',
+                            ];
                             DB::where('agent', $this->agent)->where('msgid', $item['msgId'])
-                                ->update(['result_status' => $item['status']]);
+                                ->update($data);
                         }
                     }
                 }
