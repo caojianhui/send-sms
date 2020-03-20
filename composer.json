@@ -20,8 +20,7 @@
         "psr-4": {
             "Send\\Sms\\": [
                 "src/sms/",
-                "src/sms/agents/",
-                "src/sms/interfaces/"
+                "src/sms/agents/"
             ],
             "Send\\Sms\\Facades\\": [
                 "src/sms/facades/"

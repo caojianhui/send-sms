@@ -80,7 +80,7 @@ class Sms
      */
     protected $smsData = [
         'type' => self::TYPE_SMS,
-        'interface' => self::INTERFACE_TYPE_SMS,
+        'interfaces' => self::INTERFACE_TYPE_SMS,
         'to' => null,
         'templates' => [],
         'data' => [],
@@ -230,9 +230,9 @@ class Sms
             $template = isset($templates[$driver->name]) ? $templates[$driver->name] : null;
             $file = isset($files[$driver->name]) ? $files[$driver->name] : null;
             $params = isset($params[$driver->name]) ? $params[$driver->name] : [];
-            if ($interface===self::INTERFACE_TYPE_REPORT){
+            if ($interfaces === self::INTERFACE_TYPE_REPORT) {
                 $agent->getReports($params);
-            }elseif($interface===self::INTERFACE_TYPE_SMS){
+            } elseif ($interfaces === self::INTERFACE_TYPE_SMS) {
                 if ($type === self::TYPE_VOICE) {
                     $agent->sendVoice($to, $content, $template, $data, $code, $file, $params);
                 } elseif ($type === self::TYPE_SMS) {
@@ -240,7 +240,7 @@ class Sms
                 } elseif ($type === self::TYPE_BATCH) {
                     $agent->sendBatch($data);
                 }
-            }elseif($interface===self::INTERFACE_TYPE_BALANCE){
+            } elseif ($interfaces === self::INTERFACE_TYPE_BALANCE) {
                 $agent->getBalance($params);
             }
             $result = $agent->result();
@@ -548,14 +548,16 @@ class Sms
     }
 
     /**
-     * @param $report
+     * @param $interfaces
      * @return $this
      * @throws SmsException
      */
-    public function report($report)
+    public function interfaces($interfaces)
     {
-
-        $this->smsData['report'] = $report;
+        if ($interfaces !== self::INTERFACE_TYPE_BALANCE && $interfaces !== self::INTERFACE_TYPE_SMS && $interfaces !== self::INTERFACE_TYPE_REPORT) {
+            throw new SmsException('Expected the parameter equals to `Sms::INTERFACE_TYPE_SMS` or `Sms::INTERFACE_TYPE_BALANCE`,or `Sms::INTERFACE_TYPE_REPORT`.');
+        }
+        $this->smsData['interface'] = $interfaces;
         return $this;
 
     }
@@ -719,24 +721,6 @@ class Sms
         return $this->push();
     }
 
-
-    /**
-     * @param bool $immediately
-     * @return bool|mixed
-     * @throws SmsException
-     * 拉取远程状态
-     */
-    public function report($immediately = false)
-    {
-        if (!self::$enableQueue || $this->pushedToQueue) {
-            $immediately = true;
-        }
-        if ($immediately) {
-            return self::$task->data($this->all())->run($this->firstAgent);
-        }
-
-        return $this->push();
-    }
 
     /**
      * Push to the queue system.

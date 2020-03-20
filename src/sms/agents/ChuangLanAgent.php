@@ -61,7 +61,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             if ($result['code'] == '0') {
                 $this->result(Agent::SUCCESS, true);
                 if (isset($result['balance'])) {
-                    $this->result(Agent::DATA, $result);
+                    $this->result(Agent::RESULT_DATA, $result);
                 }
             } else {
                 $this->result(Agent::INFO, $result['errorMsg']);
@@ -105,7 +105,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             }
         };
         $pool = new Pool($client, $requests($data), [
-            'concurrency' => config('sendsms.scheme.concurrency'),
+            'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data) {
                 // this is delivered each successful response
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
@@ -114,7 +114,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                 if ($result['code'] == '0') {
                     $this->result(Agent::SUCCESS, true);
                     if (isset($result['balance'])) {
-                        $this->result(Agent::DATA, $result);
+                        $this->result(Agent::RESULT_DATA, $result);
                     }
                 } else {
                     $this->result(Agent::INFO, $result['errorMsg']);
@@ -162,7 +162,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             }
         };
         $pool = new Pool($client, $requests($data), [
-            'concurrency' => config('sendsms.scheme.concurrency'),
+            'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data) {
                 // this is delivered each successful response
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);

@@ -61,6 +61,10 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         $this->request($params, self::$groupSendUrl);
     }
 
+    /**
+     * @param array $params
+     * @param $url
+     */
     protected function request(array $params, $url)
     {
         $result = $this->curlPost($url, [], [
@@ -84,7 +88,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             if ($result['code'] == '0') {
                 $this->result(Agent::SUCCESS, true);
                 if (isset($result['data'])) {
-                    $this->result(Agent::DATA, $result['data']);
+                    $this->result(Agent::RESULT_DATA, $result['data']);
                 }
                 $this->result(Agent::INFO, $result['msg']);
             } else {
@@ -111,7 +115,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             }
         };
         $pool = new Pool($client, $requests($data), [
-            'concurrency' => config('sendsms.scheme.concurrency'),
+            'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data) {
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
                 $info = $this->_getInfo($data, $index);
@@ -120,7 +124,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                     $this->result(Agent::SUCCESS, true);
                     $this->result(Agent::INFO, $result['msg']);
                     if (isset($result['data'])) {
-                        $this->result(Agent::DATA, $result['data']);
+                        $this->result(Agent::RESULT_DATA, $result['data']);
                     }
                 } else {
                     $this->result(Agent::INFO, $result['msg']);
@@ -137,6 +141,10 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
     }
 
 
+    /**
+     * @param array $params
+     * @param array $result
+     */
     public function sendLogSms(array $params, array $result)
     {
         $data = [
@@ -204,7 +212,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             }
         };
         $pool = new Pool($client, $requests($data), [
-            'concurrency' => config('sendsms.scheme.concurrency'),
+            'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data, $type) {
                 // this is delivered each successful response
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);

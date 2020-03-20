@@ -3,7 +3,6 @@
 namespace Send\Sms;
 
 
-use http\Client;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Monolog\Handler\StreamHandler;
@@ -12,7 +11,7 @@ use Monolog\Logger;
 abstract class Agent
 {
     const SUCCESS = 'success';
-    const DATA = [];
+    const RESULT_DATA = null;
     const INFO = 'info';
     const CODE = 'code';
     const LOG_FILE_CHANNEL = 'file';
@@ -59,7 +58,7 @@ abstract class Agent
             self::SUCCESS => false,
             self::INFO => null,
             self::CODE => 0,
-            self::DATA=>[],
+            self::RESULT_DATA=>null,
         ];
     }
 
@@ -177,6 +176,9 @@ abstract class Agent
         }
     }
 
+    /**
+     * @param array $params
+     */
     public function getBalance(array $params)
     {
         $this->reset();
