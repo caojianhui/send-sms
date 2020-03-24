@@ -5,6 +5,7 @@ namespace Send\Sms;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms, ClientSms, ReportSms, BalanceSms
@@ -110,8 +111,12 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             $total = collect($data)->count();
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getInfo($data, $i);
-                $url = self::$groupSendUrl . '?' . http_build_query($info);
-                yield new Request('get', $url);
+                $key = $info['key'];
+                if(!Cache::has($key)){
+                    Cache::put($key,$info,86400);
+                    $url = self::$groupSendUrl . '?' . http_build_query($info);
+                    yield new Request('get', $url);
+                }
             }
         };
         $pool = new Pool($client, $requests($data), [
@@ -187,6 +192,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             'mobile' => $data[$index]['phone'],
             'content' => $data[$index]['msg'] . $this->unsubscribe,
             'type' => $data[$index]['type'] ?? 0,
+            'key'=>$data[$index]['key']??$data[$index]['phone']
         ];
         isset($data[$index]['tenant_id']) ? $info['tenant_id'] = $data[$index]['tenant_id'] : '';
         $param = $this->_getAccount();

@@ -6,6 +6,7 @@ namespace Send\Sms;
 use GuzzleHttp\Client;
 use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 
@@ -101,7 +102,11 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             $total = collect($data)->count();
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getInfo($data, $i);
-                yield new Request('post', self::$sendUrl, [], json_encode($info, true));
+                $key = $info['key'];
+                if(!Cache::has($key)){
+                    Cache::put($key,$info,86400);
+                    yield new Request('post', self::$sendUrl, [], json_encode($info, true));
+                }
             }
         };
         $pool = new Pool($client, $requests($data), [
@@ -141,6 +146,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
         $info['msg'] = (config('sendsms.agents.' . $this->agent . '.sign') . $data[$index]['msg'] . $this->unsubscribe);
         $info['phone'] = $data[$index]['phone'];
         isset($data[$index]['tenant_id']) ? $info['tenant_id'] = $data[$index]['tenant_id'] : '';
+        $info['key'] = $data[$index]['key']??$info['phone'];
         return $info;
     }
 
