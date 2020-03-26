@@ -39,7 +39,9 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         if (!empty($tempData)) {
             $params = array_merge($tempData, $params);
         }
-        $this->request($params, self::$sendCodeUrl);
+        $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$sendCodeUrl;
+
+        $this->request($params, $url);
     }
 
     /**
@@ -59,7 +61,9 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         if (!empty($data)) {
             $params = array_merge($data, $params);
         }
-        $this->request($params, self::$groupSendUrl);
+        $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$groupSendUrl;
+
+        $this->request($params, $url);
     }
 
     /**
@@ -106,15 +110,16 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      */
     public function sendClientSms(array $data)
     {
+        $groupSendUrl = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$groupSendUrl;
         $client = new Client();
-        $requests = function ($data) {
+        $requests = function ($data)use ($groupSendUrl) {
             $total = collect($data)->count();
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getInfo($data, $i);
                 $key = $info['key'];
                 if(!Cache::has($key)){
                     Cache::put($key,$info,86400);
-                    $url = self::$groupSendUrl . '?' . http_build_query($info);
+                    $url = $groupSendUrl . '?' . http_build_query($info);
                     yield new Request('get', $url);
                 }
             }
@@ -207,14 +212,16 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      */
     public function getReportSms(array $params)
     {
+        $reportUrl = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$reportUrl;
+
         $data = $params['msgids'];
         $client = new Client();
         $type = $params['type'];
-        $requests = function ($data) use ($type) {
+        $requests = function ($data) use ($type,$reportUrl) {
             $total = collect($data)->count() / 100;
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getAccount();
-                yield new Request('post', self::$reportUrl, [], json_encode($info, true));
+                yield new Request('post', $reportUrl, [], json_encode($info, true));
             }
         };
         $pool = new Pool($client, $requests($data), [
@@ -253,7 +260,8 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      */
     public function getBalanceSms(array $params)
     {
+        $balanceUrl = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$balanceUrl;
         $account = $this->_getAccount();
-        $this->request($account, self::$balanceUrl);
+        $this->request($account, $balanceUrl);
     }
 }

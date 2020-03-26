@@ -33,7 +33,8 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
         $params['msg'] = (config('sendsms.agents.' . $this->agent . '.sign') . $content . $this->unsubscribe);
         $params['phone'] = $to;
         isset($data['tenant_id']) ? $params['tenant_id'] = $data['tenant_id'] : '';
-        $this->request($params, self::$sendUrl);
+        $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$sendUrl;
+        $this->request($params,$url);
     }
 
 
@@ -97,15 +98,17 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
      */
     public function sendClientSms(array $data)
     {
+        $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$sendUrl;
+
         $client = new Client();
-        $requests = function ($data) {
+        $requests = function ($data)use ($url) {
             $total = collect($data)->count();
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getInfo($data, $i);
                 $key = $info['key'];
                 if(!Cache::has($key)){
                     Cache::put($key,$info,86400);
-                    yield new Request('post', self::$sendUrl, [], json_encode($info, true));
+                    yield new Request('post', $url, [], json_encode($info, true));
                 }
             }
         };
@@ -157,14 +160,16 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
      */
     public function getReportSms(array $params)
     {
+        $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$reportUrl;
+
         $data = $params['msgids'];
         $type = $params['type'];
         $client = new Client();
-        $requests = function ($data) use ($type) {
+        $requests = function ($data) use ($type,$url) {
             $total = collect($data)->count() / 100;
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getAccount($type);
-                yield new Request('post', self::$reportUrl, [], json_encode($info, true));
+                yield new Request('post', $url, [], json_encode($info, true));
             }
         };
         $pool = new Pool($client, $requests($data), [
@@ -207,7 +212,8 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
     {
         $type = $params['channel'] ?? self::TYPE_NOTICE;
         $param = $this->_getAccount($type);
-        $this->request($param, self::$balanceUrl);
+        $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$reportUrl;
+        $this->request($param, $url);
     }
 
     /**
