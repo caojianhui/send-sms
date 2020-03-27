@@ -107,7 +107,6 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                 $info = $this->_getInfo($data, $i);
                 $key = $info['key'];
                 if(!Cache::has($key)){
-                    Cache::put($key,$info,86400);
                     yield new Request('post', $url, [], json_encode($info, true));
                 }
             }
@@ -118,6 +117,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                 // this is delivered each successful response
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
                 $info = $this->_getInfo($data, $index);
+                Cache::put($info['key'],$info,86400);
                 $this->sendLogSms($info, $result);
                 if ($result['code'] == '0') {
                     $this->result(Agent::SUCCESS, true);

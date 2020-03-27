@@ -118,7 +118,6 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                 $info = $this->_getInfo($data, $i);
                 $key = $info['key'];
                 if(!Cache::has($key)){
-                    Cache::put($key,$info,86400);
                     $url = $groupSendUrl . '?' . http_build_query($info);
                     yield new Request('get', $url);
                 }
@@ -129,6 +128,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             'fulfilled' => function ($response, $index) use ($data) {
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
                 $info = $this->_getInfo($data, $index);
+                Cache::put($info['key'],$info,86400);
                 $this->sendLogSms($info, $result);
                 if ($result['code'] == '0') {
                     $this->result(Agent::SUCCESS, true);
