@@ -128,7 +128,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             'fulfilled' => function ($response, $index) use ($data) {
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
                 $info = $this->_getInfo($data, $index);
-                Cache::put($info['key'],$info,86400);
+                Cache::put($info['key'],$info,config('sendsms.cache_time'));
                 $this->sendLogSms($info, $result);
                 if ($result['code'] == '0') {
                     $this->result(Agent::SUCCESS, true);

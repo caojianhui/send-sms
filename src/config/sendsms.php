@@ -38,6 +38,7 @@ return [
         'file' => env('SENDSMS_LOG_FILE', storage_path('logs/sendsms.log')),
         'filename'=>env('SENDSMS_LOG_FILENAME', 'sendSmsLog'),
     ],
+    'cache_time'=>env('SENDSMS_CACHE_TIME',7200),
 
     /*
      * The configuration
