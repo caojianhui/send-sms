@@ -332,4 +332,73 @@ trait TableStoreTrait
     }
 
 
+    /**
+     * @param $where
+     * @param $limit
+     * @param bool $page
+     * @return array|\Illuminate\Support\Collection|mixed
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     * 获取列表
+     */
+    public  static function getList($where, $limit, $page = true)
+    {
+        $query = self::getQuery($where);
+        if(empty($query)) {
+            return [];
+        }
+        $otsClient = self::getClient();
+        $request = self::getRequest($query,$limit);
+        $response = $otsClient->search($request);
+        return self::getData($response, $otsClient, $request,$page);
+    }
+
+    /**
+     * @param $response
+     * @param $otsClient
+     * @param $request
+     * @param bool $page
+     * @return \Illuminate\Support\Collection|mixed
+     *分页查询数据
+     */
+    private static function getData($response, $otsClient, $request, $page=true)
+    {
+        $lists = collect([]);
+        $lists = self::setLists($response, $lists);
+        if($page){
+            while($response['next_token']!=null){
+                $request['search_query']['token'] = $response['next_token'];
+                $request['search_query']['sort'] = null;//有next_token时，不设置sort，token中含sort信息
+                $response = $otsClient->search($request);
+                $lists = self::setLists($response, $lists);
+            }
+        }
+        return $lists;
+    }
+
+    /**
+     * @param $response
+     * @param $lists
+     * @return mixed
+     * 返回列表数据
+     */
+    private static function setLists($response, $lists)
+    {
+        collect($response['rows'])->each(function($item) use (&$lists){
+            $arr = collect();
+            if(isset($item['primary_key'])){
+                foreach($item['primary_key'] as $value){
+                    $arr->put($value[0], (int)$value[1]);
+                }
+            }
+            if(isset($item['attribute_columns'])){
+                foreach($item['attribute_columns'] as $column){
+                    $arr->put($column[0], $column[1]);
+                }
+            }
+            $lists->push($arr);
+        });
+        return $lists;
+    }
+
 }
