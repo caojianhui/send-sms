@@ -294,12 +294,25 @@ trait TableStoreTrait
     private static function getQuery($where)
     {
         foreach($where as $key => $value){
-            $query[] = array(
-                'query_type' => QueryTypeConst::TERM_QUERY,
-                'query' => array(
-                    'field_name' => $key,
-                    'term' => $value
-                ));
+            if ($key=='startTime'){
+                $arr = array(
+                    'query_type' => QueryTypeConst::RANGE_QUERY,
+                    'query' => array(
+                        'field_name' => 'sended_at',
+                        'range_from' => $value[0],
+                        'include_lower' => true,
+                        'range_to' => $value[1],
+                        'include_upper' => false
+                    ));
+            }else{
+                $arr =  array(
+                    'query_type' => QueryTypeConst::TERM_QUERY,
+                    'query' => array(
+                        'field_name' => $key,
+                        'term' => $value
+                    ));
+            }
+            $query[] = $arr;
         }
         return $query;
     }
