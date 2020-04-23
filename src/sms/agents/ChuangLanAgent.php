@@ -169,7 +169,8 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             $total = collect($data)->count() / 100;
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getAccount($type);
-                yield new Request('post', $url, [], json_encode($info, true));
+                $url = $url . '?' . http_build_query($info);
+                yield new Request('get', $url);
             }
         };
         $pool = new Pool($client, $requests($data), [
@@ -180,16 +181,8 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                 $config = config('sendsms.log');
                 if ($result['ret'] == 0) {
                     $re = json_decode($result['result'], true);
-                    if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
-                        foreach ($re as $item) {
-                            $data = [
-                                'update_at' => date('Y-m-d H:i:s'),
-                                'result_status' => $item['status'] ?? '',
-                            ];
-                            DB::where('agent', $this->agent)->where('msgid', $item['msgId'])
-                                ->update($data);
-                        }
-                    }
+                    $info = $this->_getInfo($data, $index);
+                    $this->updateLog($config,$re,$info);
                 }
             },
             'rejected' => function ($reason, $index) {
@@ -202,7 +195,35 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
 
     }
 
-
+    /**
+     * @param $config
+     * @param $re
+     * @param $type
+     * @param $info
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     */
+    private function updateLog($config, $re, $info){
+        if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
+            foreach ($re as $item) {
+                $data = [
+                    'update_at' => date('Y-m-d H:i:s'),
+                    'result_status' => $item['status'] ?? '',
+                ];
+                DB::where('agents', $this->agent)->where('msgid', $item['msgId'])
+                    ->update($data);
+            }
+        }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
+            foreach ($re as $item) {
+                $data = [
+                    'result_status' => $item['status'] ?? '',
+                    'tenant_id' => $info['tenant_id']
+                ];
+                $where = ['msgid' => $item['msgId'],'agents'=>$this->agent];
+                self::updateRows($data,$where);
+            }
+        }
+    }
     /**
      * @param array $params
      * @return mixed|void

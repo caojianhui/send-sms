@@ -33,12 +33,22 @@ return [
     'is_dev'=>env('SENDSMS_IS_DEV',false),
     'dev_url'=>env('SENDSMS_DEV_URL','http://www.sms.la/sms/test'),
     'log' => [
-        //日志记录渠道：file(日志目录),database(数据表存储)
+        //日志记录渠道：file(日志目录),database(数据表存储),阿里云tablestore存储
         'channel' => env('SENDSMS_LOG_CHANNEL', 'database'),
         'file' => env('SENDSMS_LOG_FILE', storage_path('logs/sendsms.log')),
         'filename'=>env('SENDSMS_LOG_FILENAME', 'sendSmsLog'),
     ],
     'cache_time'=>env('SENDSMS_CACHE_TIME',7200),
+
+    'table_store'=>[
+        'EndPoint' => env('EXAMPLE_END_POINT'),
+        'AccessKeyID' => env('EXAMPLE_ACCESS_KEY_ID'),
+        'AccessKeySecret' => env('EXAMPLE_ACCESS_KEY_SECRET'),
+        'InstanceName' => env('EXAMPLE_INSTANCE_NAME'),
+        'ErrorLogHandler'=>env('ERRORLOGHANDLER',''),
+        'DebugLogHandler'=>env('DEBUGLOGHANDLER','')
+    ],
+
 
     /*
      * The configuration

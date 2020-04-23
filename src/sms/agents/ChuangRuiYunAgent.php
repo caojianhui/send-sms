@@ -213,7 +213,6 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
     public function getReportSms(array $params)
     {
         $reportUrl = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$reportUrl;
-
         $data = $params['msgids'];
         $client = new Client();
         $type = $params['type'];
@@ -221,7 +220,8 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             $total = collect($data)->count() / 100;
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getAccount();
-                yield new Request('post', $reportUrl, [], json_encode($info, true));
+                $url = $reportUrl . '?' . http_build_query($info);
+                yield new Request('get', $url);
             }
         };
         $pool = new Pool($client, $requests($data), [
@@ -232,17 +232,8 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                 $config = config('sendsms.log');
                 if ($result['code'] == 0) {
                     $re = json_decode($result['data'], true);
-                    if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
-                        foreach ($re as $item) {
-                            $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
-                            $data = [
-                                'update_at' => date('Y-m-d H:i:s'),
-                                'result_status' => $item['deliverResult'] ?? '',
-                            ];
-                            DB::where('agent', $this->agent)->where('msgid', $msgid)
-                                ->update($data);
-                        }
-                    }
+                    $info = $this->_getInfo($data, $index);
+                    $this->updateLog($config,$re,$type,$info);
                 }
             },
             'rejected' => function ($reason, $index) {
@@ -252,6 +243,39 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         $promise = $pool->promise();
         $promise->wait();
 
+    }
+
+    /**
+     * @param $config
+     * @param $re
+     * @param $type
+     * @param $info
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     */
+    private function updateLog($config, $re, $type, $info){
+        if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
+            foreach ($re as $item) {
+                $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
+                $data = [
+                    'update_at' => date('Y-m-d H:i:s'),
+                    'result_status' => $item['deliverResult'] ?? '',
+                ];
+                DB::where('agents', $this->agent)->where('msgid', $msgid)
+                    ->update($data);
+            }
+        }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
+            foreach ($re as $item) {
+                $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
+                $data = [
+                    'result_status' => $item['deliverResult'] ?? '',
+                    'tenant_id' => $info['tenant_id']
+                ];
+
+                $where = ['msgid' => $msgid,'agents'=>$this->agent];
+                self::updateRows($data,$where);
+            }
+        }
     }
 
     /**

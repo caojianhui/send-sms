@@ -7,15 +7,19 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Send\Sms\Traits\TableStoreTrait;
 
 abstract class Agent
 {
+    use TableStoreTrait;
     const SUCCESS = 'success';
     const RESULT_DATA = null;
     const INFO = 'info';
     const CODE = 'code';
     const LOG_FILE_CHANNEL = 'file';
     const LOG_DATABASE_CHANNEL = 'database';
+    const LOG_TABLESTORE_CHANNEL = 'tablestore';
+
 
     /**
      * The configuration information.
@@ -357,6 +361,11 @@ abstract class Agent
             $log = new Logger($config['filename']);
             $log->pushHandler(new StreamHandler($file, Logger::INFO));
             $log->addInfo(json_encode($data, true));
+        }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL) {
+            $tableConfig = config('sendsms.table_store');
+            if(!empty($tableConfig['AccessKeyID']) && !empty($tableConfig['AccessKeySecret'])){
+                self::putRow($data);
+            }
         }
     }
 
