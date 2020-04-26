@@ -377,6 +377,29 @@ trait TableStoreTrait
     }
 
     /**
+     * @param $tenantId
+     * @param array $ids
+     * @param string $tableName
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     * 批量删除数据
+     */
+    public static function batchDeleteRows($tenantId, array $ids, $tableName='sms_logs'){
+        $otsClient = self::getClient();
+        foreach($ids as $item){
+            $request = array (
+                'table_name' => $tableName,
+                'condition' => RowExistenceExpectationConst::CONST_IGNORE,
+                'primary_key' => array ( // 主键
+                    array('tenant_id', $tenantId),
+                    array('id', (int)$item)
+                )
+            );
+            $otsClient->deleteRow ($request);
+        }
+    }
+
+    /**
      * @param $where
      * @return array|mixed
      * @throws \Aliyun\OTS\OTSClientException
