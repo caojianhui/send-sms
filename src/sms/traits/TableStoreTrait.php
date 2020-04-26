@@ -9,6 +9,7 @@ use Aliyun\OTS\Consts\ColumnTypeConst;
 use Aliyun\OTS\Consts\ComparatorTypeConst;
 use Aliyun\OTS\Consts\FieldTypeConst;
 use Aliyun\OTS\Consts\LogicalOperatorConst;
+use Aliyun\OTS\Consts\PrimaryKeyOptionConst;
 use Aliyun\OTS\Consts\PrimaryKeyTypeConst;
 use Aliyun\OTS\Consts\QueryTypeConst;
 use Aliyun\OTS\Consts\RowExistenceExpectationConst;
@@ -31,6 +32,7 @@ trait TableStoreTrait
                 'table_name' => $tableName, // 表名为 MyTable
                 'primary_key_schema' => array (
                     array('tenant_id', PrimaryKeyTypeConst::CONST_INTEGER), // 第一个主键列（又叫分片键）名称为PK0, 类型为 INTEGER
+                    array('id',PrimaryKeyTypeConst::CONST_INTEGER, PrimaryKeyOptionConst::CONST_PK_AUTO_INCR)
                 )
             ), // 第二个主键列名称为PK1, 类型为STRING
 
@@ -194,6 +196,8 @@ trait TableStoreTrait
             'condition' => RowExistenceExpectationConst::CONST_IGNORE, // condition可以为IGNORE, EXPECT_EXIST, EXPECT_NOT_EXIST
             'primary_key' => array ( // 主键
                 array('tenant_id', $data['tenant_id']),
+                array('id',PrimaryKeyTypeConst::CONST_INTEGER, PrimaryKeyOptionConst::CONST_PK_AUTO_INCR)
+
             ),
             'attribute_columns' => array( // 属性
                 array('to',$data['to']??''),
@@ -370,6 +374,18 @@ trait TableStoreTrait
         $request = self::getRequest($query,$limit);
         $response = $otsClient->search($request);
         return self::getData($response, $otsClient, $request,$page);
+    }
+
+    /**
+     * @param $where
+     * @return array|mixed
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     * 获取一条数据
+     */
+    public static function getRows($where){
+        $lists = self::getList($where,1,false);
+        return $lists->isNotEmpty()?$lists->first():[];
     }
 
     /**
