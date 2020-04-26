@@ -364,6 +364,7 @@ abstract class Agent
         }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL) {
             $tableConfig = config('sendsms.table_store');
             if(!empty($tableConfig['AccessKeyID']) && !empty($tableConfig['AccessKeySecret'])){
+                $data['created_at'] = date('Y-m-d H:i:s');
                 self::putRow($data);
             }
         }
