@@ -199,7 +199,7 @@ trait TableStoreTrait
                 array('to',$data['to']??''),
                 array('type',$data['type']??1),
                 array('temp_id',$data['temp_id']??''),
-                array('msgid',$data['msgid']??''),
+                array('msgid',(string)$data['msgid']??''),
                 array('content',$data['content']??''),
                 array('status',$data['status']?:1),
                 array('refund_at',$data['refund_at']??0),
