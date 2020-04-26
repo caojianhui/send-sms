@@ -242,7 +242,7 @@ trait TableStoreTrait
                         ],
                         [
                             'column_name' => 'msgid',
-                            'value' => $where['msgid'],
+                            'value' => (string)$where['msgid'],
                             'comparator' => ComparatorTypeConst::CONST_EQUAL
                         ]
                     ]
