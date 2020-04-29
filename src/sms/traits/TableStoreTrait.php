@@ -74,6 +74,14 @@ trait TableStoreTrait
                         'is_array' => false
                     ),
                     array(
+                        'field_name' => 'id',
+                        'field_type' => FieldTypeConst::LONG,
+                        'index' => true,
+                        'enable_sort_and_agg' => true,
+                        'store' => true,
+                        'is_array' => false
+                    ),
+                    array(
                         'field_name' => 'act_id',
                         'field_type' => FieldTypeConst::LONG,
                         'index' => true,
