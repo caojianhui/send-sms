@@ -84,6 +84,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             'result_info' => json_encode($result),
             'type' => $params['type'] ?? self::TYPE_NOTICE,
             'msgid' => $result['code'] == '0' ? ($result['msgId'] ?? '') : '',
+            'act_id'=>$params['act_id']??0
         ];
         if (isset($params['tenant_id'])) {
             $data['tenant_id'] = $params['tenant_id'];
@@ -160,7 +161,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
      */
     public function getReportSms(array $params)
     {
-        $url = config('sendsms.is_dev')==true?config('sendsms.dev_reports_url'):self::$reportUrl;
+        $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$reportUrl;
 
         $data = $params['msgids'];
         $type = $params['type'];
@@ -180,7 +181,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
                 $config = config('sendsms.log');
                 if ($result['ret'] == 0) {
-                    $re = json_decode($result['result'], true);
+                    $re = $result['result'];
                     $info = $this->_getInfo($data, $index);
                     $this->updateLog($config,$re,$info);
                 }
@@ -220,7 +221,10 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                     'tenant_id' => $info['tenant_id']
                 ];
                 $where = ['msgid' => $item['msgId'],'agents'=>$this->agent,'tenant_id' => $info['tenant_id']];
+                $model = self::getRows($where);
                 if(!empty($model)){
+                    $data['id'] = $model['id'];
+                    $data['is_back']=1;
                     return self::updateRows($data,$where);
                 }
             }

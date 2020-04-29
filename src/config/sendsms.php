@@ -47,7 +47,9 @@ return [
         'AccessKeySecret' => env('EXAMPLE_ACCESS_KEY_SECRET'),
         'InstanceName' => env('EXAMPLE_INSTANCE_NAME'),
         'ErrorLogHandler'=>env('ERRORLOGHANDLER',''),
-        'DebugLogHandler'=>env('DEBUGLOGHANDLER','')
+        'DebugLogHandler'=>env('DEBUGLOGHANDLER',''),
+        'ConnectionTimeout'=>env('CONNECTIONTIMEOUT',1000.0),
+        'SocketTimeout'=>env('SOCKETTIMEOUT',1000.0)
     ],
 
 

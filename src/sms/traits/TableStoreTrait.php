@@ -74,6 +74,14 @@ trait TableStoreTrait
                         'is_array' => false
                     ),
                     array(
+                        'field_name' => 'act_id',
+                        'field_type' => FieldTypeConst::LONG,
+                        'index' => true,
+                        'enable_sort_and_agg' => true,
+                        'store' => true,
+                        'is_array' => false
+                    ),
+                    array(
                         'field_name' => 'type',
                         'field_type' => FieldTypeConst::LONG,
                         'index' => true,
@@ -131,6 +139,14 @@ trait TableStoreTrait
                     ),
                     array(
                         'field_name' => 'result_status',
+                        'field_type' => FieldTypeConst::KEYWORD,
+                        'index' => true,
+                        'enable_sort_and_agg' => true,
+                        'store' => true,
+                        'is_array' => false
+                    ),
+                    array(
+                        'field_name' => 'is_back',
                         'field_type' => FieldTypeConst::LONG,
                         'index' => true,
                         'enable_sort_and_agg' => true,
@@ -207,7 +223,9 @@ trait TableStoreTrait
                 array('content',$data['content']??''),
                 array('status',$data['status']?:1),
                 array('refund_at',$data['refund_at']??0),
-                array('result_status',$data['result_status']??''),
+                array('result_status',(string)$data['result_status']??''),
+                array('act_id',$data['act_id']??0),
+                array('is_back',isset($data['result_status'])&&!empty($data['result_status'])?1:0),
                 array('agents',$data['agents']??''),
                 array('params',$data['params']??''),
                 array('result_info',$data['result_info']??''),
@@ -227,10 +245,9 @@ trait TableStoreTrait
      */
     public static function updateRows(array $info, $where,$tableName='sms_logs'){
         $otsClient = self::getClient();
-        foreach($info as $key =>$item){
-            if($key!='tenant_id'){
-                $query[] =[$key,$item];
-            }
+        $data = array_except($info,['id','tenant_id']);
+        foreach($data as $key =>$item){
+            $query[] =[$key,$item];
         }
         $request = array (
             'table_name' => $tableName,
@@ -254,12 +271,14 @@ trait TableStoreTrait
             ],
             'primary_key' => array ( // 主键
                 array('tenant_id', $info['tenant_id']),
+                array('id', $info['id']),
             ),
             'update_of_attribute_columns'=> array(
                 'PUT' => $query,
             )
         );
-        return $otsClient->updateRow ($request);
+        $response = $otsClient->updateRow ($request);
+        return $response;
     }
 
 
@@ -286,7 +305,7 @@ trait TableStoreTrait
      */
     private static function getClient()
     {
-        $array = config('admin.table_store');
+        $array = config('sendsms.table_store');
         return new OTSClient($array);
     }
 
@@ -427,7 +446,7 @@ trait TableStoreTrait
         $otsClient = self::getClient();
         $request = self::getRequest($query,$limit);
         $response = $otsClient->search($request);
-        return self::getData($response, $otsClient, $request,$page);
+        return self::getData($response, $request,$page);
     }
 
     /**
@@ -444,18 +463,18 @@ trait TableStoreTrait
 
     /**
      * @param $response
-     * @param $otsClient
      * @param $request
      * @param bool $page
      * @return \Illuminate\Support\Collection|mixed
      *分页查询数据
      */
-    private static function getData($response, $otsClient, $request, $page=true)
+    private static function getData($response, $request, $page=true)
     {
         $lists = collect([]);
         $lists = self::setLists($response, $lists);
         if($page){
             while($response['next_token']!=null){
+                $otsClient = self::getClient();
                 $request['search_query']['token'] = $response['next_token'];
                 $request['search_query']['sort'] = null;//有next_token时，不设置sort，token中含sort信息
                 $response = $otsClient->search($request);
@@ -512,6 +531,51 @@ trait TableStoreTrait
             );
             $otsClient->deleteRow ($request);
         }
+    }
+
+
+    public static function getPageList($where, $limit, $nextToken=null)
+    {
+        $query = self::getQuery($where);
+        if(empty($query)) {
+            return [];
+        }
+        $request = self::getRequest($query,$limit);
+        if(!is_null($nextToken)){
+            $request['search_query']['token'] = $nextToken;
+            $request['search_query']['sort'] = null;//有next_token时，不设置sort，token中含sort信息
+            $otsClient = self::getClient();
+            $response = $otsClient->search($request);
+        }else{
+            $otsClient = self::getClient();
+            $response = $otsClient->search($request);
+        }
+        return self::setPageLists($response);
+    }
+
+
+    private static function setPageLists($response)
+    {
+        $data = collect([]);
+        $lists = collect([]);
+        if(empty($response['rows'])) return collect(['data'=>$data,'next_token'=>null]);
+        collect($response['rows'])->each(function($item) use (&$data){
+            $arr = collect();
+            if(isset($item['primary_key'])){
+                foreach($item['primary_key'] as $value){
+                    $arr->put($value[0], (int)$value[1]);
+                }
+            }
+            if(isset($item['attribute_columns'])){
+                foreach($item['attribute_columns'] as $column){
+                    $arr->put($column[0], $column[1]);
+                }
+            }
+            $data->push($arr);
+        });
+        $lists->put('data',$data);
+        $lists->put('next_token',$response['next_token']??null);
+        return $lists;
     }
 
 }

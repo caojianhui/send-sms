@@ -231,7 +231,7 @@ class Sms
             $file = isset($files[$driver->name]) ? $files[$driver->name] : null;
             $params = isset($params[$driver->name]) ? $params[$driver->name] : [];
             if ($interfaces === self::INTERFACE_TYPE_REPORT) {
-                $agent->getReports($params);
+                $agent->getReports($data);
             } elseif ($interfaces === self::INTERFACE_TYPE_SMS) {
                 if ($type === self::TYPE_VOICE) {
                     $agent->sendVoice($to, $content, $template, $data, $code, $file, $params);
@@ -557,7 +557,7 @@ class Sms
         if ($interfaces !== self::INTERFACE_TYPE_BALANCE && $interfaces !== self::INTERFACE_TYPE_SMS && $interfaces !== self::INTERFACE_TYPE_REPORT) {
             throw new SmsException('Expected the parameter equals to `Sms::INTERFACE_TYPE_SMS` or `Sms::INTERFACE_TYPE_BALANCE`,or `Sms::INTERFACE_TYPE_REPORT`.');
         }
-        $this->smsData['interface'] = $interfaces;
+        $this->smsData['interfaces'] = $interfaces;
         return $this;
 
     }

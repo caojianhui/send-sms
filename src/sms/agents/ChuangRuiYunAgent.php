@@ -166,7 +166,8 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             'params' => json_encode($params),
             'result_info' => json_encode($result),
             'type' => $params['type'] ?? self::TYPE_MARKET,
-            'msgid' => $result['code'] == '0' ? ($result['batchId'] ?? '') : ($result['smUuid'] ?? '')
+            'msgid' => $result['code'] == '0' ? ($result['batchId'] ?? '') : ($result['smUuid'] ?? ''),
+            'act_id'=>$params['act_id']??0
         ];
         if (isset($params['tenant_id'])) {
             $data['tenant_id'] = $params['tenant_id'];
@@ -214,6 +215,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
     {
         $reportUrl = config('sendsms.is_dev')==true?config('sendsms.dev_reports_url'):self::$reportUrl;
         $data = $params['msgids'];
+        $tenantId = $params['tenant_id'];
         $client = new Client();
         $type = $params['type'];
         $requests = function ($data) use ($type,$reportUrl) {
@@ -226,14 +228,13 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         };
         $pool = new Pool($client, $requests($data), [
             'concurrency' => config('sendsms.concurrency'),
-            'fulfilled' => function ($response, $index) use ($data, $type) {
+            'fulfilled' => function ($response, $index) use ($data, $type,$tenantId) {
                 // this is delivered each successful response
                 $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
                 $config = config('sendsms.log');
                 if ($result['code'] == 0) {
-                    $re = json_decode($result['data'], true);
-                    $info = $this->_getInfo($data, $index);
-                    $this->updateLog($config,$re,$type,$info);
+                    $re = $result['data'];
+                    $this->updateLog($config,$re,$type,$tenantId);
                 }
             },
             'rejected' => function ($reason, $index) {
@@ -249,11 +250,10 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      * @param $config
      * @param $re
      * @param $type
-     * @param $info
      * @throws \Aliyun\OTS\OTSClientException
      * @throws \Aliyun\OTS\OTSServerException
      */
-    private function updateLog($config, $re, $type, $info){
+    private function updateLog($config, $re, $type, $tenantId){
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
             foreach ($re as $item) {
                 $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
@@ -269,12 +269,13 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                 $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
                 $data = [
                     'result_status' => $item['deliverResult'] ?? '',
-                    'tenant_id' => $info['tenant_id']
+                    'tenant_id' => $tenantId
                 ];
-
-                $where = ['msgid' => $msgid,'agents'=>$this->agent,'tenant_id' => $info['tenant_id']];
+                $where = ['msgid' => $msgid,'agents'=>$this->agent,'tenant_id' => $tenantId];
                 $model = self::getRows($where);
                 if(!empty($model)){
+                    $data['id'] = $model['id'];
+                    $data['is_back']=1;
                     return self::updateRows($data,$where);
                 }
             }
