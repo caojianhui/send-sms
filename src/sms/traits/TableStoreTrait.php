@@ -276,7 +276,6 @@ trait TableStoreTrait
         }
         $otsClient = self::getClient();
         $request = self::getRequest($query,2);
-        dd($request);
         $response = $otsClient->search($request);
         return $response['total_hits'];
     }
