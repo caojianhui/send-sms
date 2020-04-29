@@ -160,7 +160,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
      */
     public function getReportSms(array $params)
     {
-        $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$reportUrl;
+        $url = config('sendsms.is_dev')==true?config('sendsms.dev_reports_url'):self::$reportUrl;
 
         $data = $params['msgids'];
         $type = $params['type'];

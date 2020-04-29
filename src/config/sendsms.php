@@ -32,6 +32,7 @@ return [
     'concurrency'=>env('SENDSMS_CONCURRENCY',1000),//批量发送请求并发数
     'is_dev'=>env('SENDSMS_IS_DEV',false),
     'dev_url'=>env('SENDSMS_DEV_URL','http://www.sms.la/sms/test'),
+    'dev_reports_url'=>env('SENDSMS_DEV_REPORTS_URL','http://www.sms.la/sms/reports'),
     'log' => [
         //日志记录渠道：file(日志目录),database(数据表存储),阿里云tablestore存储
         'channel' => env('SENDSMS_LOG_CHANNEL', 'database'),

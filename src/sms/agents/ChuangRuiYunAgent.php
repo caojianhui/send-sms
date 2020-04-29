@@ -212,7 +212,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      */
     public function getReportSms(array $params)
     {
-        $reportUrl = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$reportUrl;
+        $reportUrl = config('sendsms.is_dev')==true?config('sendsms.dev_reports_url'):self::$reportUrl;
         $data = $params['msgids'];
         $client = new Client();
         $type = $params['type'];
