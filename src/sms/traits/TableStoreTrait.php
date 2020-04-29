@@ -214,7 +214,7 @@ trait TableStoreTrait
                 array('sended_at',$data['created_at']?strtotime($data['created_at']):0),
             )
         );
-       return  $otsClient->putRow ($request);
+        return  $otsClient->putRow ($request);
     }
 
     /**
@@ -276,6 +276,7 @@ trait TableStoreTrait
         }
         $otsClient = self::getClient();
         $request = self::getRequest($query,2);
+        dd($request);
         $response = $otsClient->search($request);
         return $response['total_hits'];
     }
@@ -300,31 +301,85 @@ trait TableStoreTrait
         $query = collect([]);
         foreach($where as $key => $value){
             if ($key=='range'){
-                if(!is_array($value)){
+                if(is_array($value)){
                     foreach($value as $k =>$v){
-                        $arr =  array(
-                            'query_type' => QueryTypeConst::RANGE_QUERY,
-                            'query' => array(
-                                'field_name' => $k,
-                                'range_from' => $v[0],
-                                'include_lower' => true,
-                                'range_to' => $v[1],
-                                'include_upper' => false
-                            ));
-                        $query->push($arr);
+                        $query->push(self::getRangeQuery($k,$v));
+                    }
+                }
+            }elseif($key=='wildcard'){
+                if(is_array($value)){
+                    foreach($value as $k => $v){
+                        $query->push(self::getWildcardQuery($k, $v));
                     }
                 }
             }else{
-                $arr =  array(
-                    'query_type' => QueryTypeConst::TERM_QUERY,
-                    'query' => array(
-                        'field_name' => $key,
-                        'term' => $value
-                    ));
+                $arr =  self::getTermQuery($key, $value);
                 $query->push($arr);
             }
         }
         return $query->toArray();
+    }
+
+    /**
+     * @param $key
+     * @param $value
+     * @return array
+     * 精确查询
+     */
+    private static function getTermQuery($key, $value){
+        return array(
+            'query_type' => QueryTypeConst::TERM_QUERY,
+            'query' => array(
+                'field_name' => $key,
+                'term' => $value
+            ));
+    }
+
+    /**
+     * @param $key
+     * @param $value
+     * @return array
+     * 通配符查询（模糊查询）
+     */
+    private static function getWildcardQuery($key, $value){
+        return array(
+            'query_type' => QueryTypeConst::WILDCARD_QUERY,
+            'query' => array(
+                'field_name' => $key,
+                'value'=>$value
+            ));
+
+    }
+
+    /**
+     * @param $key
+     * @param $value
+     * @return array
+     * 范围查询
+     */
+    private static function getRangeQuery($key, $value){
+
+        if(is_array($value)){
+            return array(
+                'query_type' => QueryTypeConst::RANGE_QUERY,
+                'query' => array(
+                    'field_name' => $key,
+                    'range_from' => $value[0],
+                    'include_lower' => true,
+                    'range_to' => $value[1],
+                    'include_upper' => false
+                ));
+        }else{
+            return array(
+                'query_type' => QueryTypeConst::RANGE_QUERY,
+                'query' => array(
+                    'field_name' => $key,
+                    'range_from' => $value,
+                    'include_lower' => true,
+                    'include_upper' => false
+                ));
+        }
+
     }
 
 
@@ -374,29 +429,6 @@ trait TableStoreTrait
         $request = self::getRequest($query,$limit);
         $response = $otsClient->search($request);
         return self::getData($response, $otsClient, $request,$page);
-    }
-
-    /**
-     * @param $tenantId
-     * @param array $ids
-     * @param string $tableName
-     * @throws \Aliyun\OTS\OTSClientException
-     * @throws \Aliyun\OTS\OTSServerException
-     * 批量删除数据
-     */
-    public static function batchDeleteRows($tenantId, array $ids, $tableName='sms_logs'){
-        $otsClient = self::getClient();
-        foreach($ids as $item){
-            $request = array (
-                'table_name' => $tableName,
-                'condition' => RowExistenceExpectationConst::CONST_IGNORE,
-                'primary_key' => array ( // 主键
-                    array('tenant_id', $tenantId),
-                    array('id', (int)$item)
-                )
-            );
-            $otsClient->deleteRow ($request);
-        }
     }
 
     /**
@@ -457,6 +489,30 @@ trait TableStoreTrait
             $lists->push($arr);
         });
         return $lists;
+    }
+
+
+    /**
+     * @param $tenantId
+     * @param array $ids
+     * @param string $tableName
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     * 批量删除数据
+     */
+    public static function batchDeleteRows($tenantId, array $ids, $tableName='sms_logs'){
+        $otsClient = self::getClient();
+        foreach($ids as $item){
+            $request = array (
+                'table_name' => $tableName,
+                'condition' => RowExistenceExpectationConst::CONST_IGNORE,
+                'primary_key' => array ( // 主键
+                    array('tenant_id', $tenantId),
+                    array('id', (int)$item)
+                )
+            );
+            $otsClient->deleteRow ($request);
+        }
     }
 
 }
