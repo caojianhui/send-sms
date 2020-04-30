@@ -231,7 +231,7 @@ trait TableStoreTrait
                 array('content',$data['content']??''),
                 array('status',$data['status']?:1),
                 array('refund_at',$data['refund_at']??0),
-                array('result_status',(string)$data['result_status']??''),
+                array('result_status',$data['result_status']??''),
                 array('act_id',$data['act_id']??0),
                 array('is_back',isset($data['result_status'])&&!empty($data['result_status'])?1:0),
                 array('agents',$data['agents']??''),
