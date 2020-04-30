@@ -222,7 +222,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             foreach ($re as $item) {
                 $data = [
                     'result_status' => $item['status'] ?? '',
-                    'tenant_id' => $info['tenant_id']
+                    'tenant_id' => $tenantId,
                 ];
                 $where = ['msgid' => $item['msgId'],'agents'=>$this->agent,'tenant_id' => $tenantId];
                 $model = self::getRows($where);

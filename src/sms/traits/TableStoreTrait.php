@@ -251,30 +251,18 @@ trait TableStoreTrait
      * @throws \Aliyun\OTS\OTSServerException
      * 更新数据
      */
-    public static function updateRows(array $info, $where,$tableName='sms_logs'){
+    public static function updateRows(array $info, array $where,$tableName='sms_logs'){
+        if (isEmpty($where) || isEmpty($info)) return [];
+        $query = self::setUpdateData($info);
+        $where = self::setUpdateWhere($where);
         $otsClient = self::getClient();
-        $data = array_except($info,['id','tenant_id']);
-        foreach($data as $key =>$item){
-            $query[] =[$key,$item];
-        }
         $request = array (
             'table_name' => $tableName,
             'condition' => [
                 'row_existence' => RowExistenceExpectationConst::CONST_EXPECT_EXIST,
                 'column_condition' => [
                     'logical_operator' =>LogicalOperatorConst::CONST_AND,
-                    'sub_conditions' => [
-                        [
-                            'column_name' => 'agents',
-                            'value' =>$where['agents'] ,
-                            'comparator' => ComparatorTypeConst::CONST_EQUAL
-                        ],
-                        [
-                            'column_name' => 'msgid',
-                            'value' => (string)$where['msgid'],
-                            'comparator' => ComparatorTypeConst::CONST_EQUAL
-                        ]
-                    ]
+                    'sub_conditions' => $where
                 ]
             ],
             'primary_key' => array ( // 主键
@@ -287,6 +275,34 @@ trait TableStoreTrait
         );
         $response = $otsClient->updateRow ($request);
         return $response;
+    }
+
+    /**
+     * @param $info
+     * @return array
+     */
+    private static function setUpdateData($info){
+        $data = array_except($info,['id','tenant_id']);
+        foreach($data as $key =>$item){
+            $query[] =[$key,$item];
+        }
+        return $query;
+    }
+
+    /**
+     * @param $where
+     * @return array
+     */
+    private static function setUpdateWhere($where){
+        $conditions = [];
+        foreach ($where as $key => $item){
+            $conditions[] = [
+                'column_name' => $key,
+                'value' =>$item ,
+                'comparator' => ComparatorTypeConst::CONST_EQUAL
+            ];
+        }
+        return $conditions;
     }
 
 
@@ -542,6 +558,14 @@ trait TableStoreTrait
     }
 
 
+    /**
+     * @param $where
+     * @param $limit
+     * @param null $nextToken
+     * @return array|\Illuminate\Support\Collection
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     */
     public static function getPageList($where, $limit, $nextToken=null)
     {
         $query = self::getQuery($where);
@@ -562,6 +586,10 @@ trait TableStoreTrait
     }
 
 
+    /**
+     * @param $response
+     * @return \Illuminate\Support\Collection
+     */
     private static function setPageLists($response)
     {
         $data = collect([]);
