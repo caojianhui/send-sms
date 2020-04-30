@@ -150,6 +150,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
         $info['msg'] = (config('sendsms.agents.' . $this->agent . '.sign') . $data[$index]['msg'] . $this->unsubscribe);
         $info['phone'] = $data[$index]['phone'];
         isset($data[$index]['tenant_id']) ? $info['tenant_id'] = $data[$index]['tenant_id'] : '';
+        isset($data[$index]['act_id']) ? $info['act_id'] = $data[$index]['act_id'] : '';
         $info['key'] = $data[$index]['key']??$info['phone'];
         return $info;
     }

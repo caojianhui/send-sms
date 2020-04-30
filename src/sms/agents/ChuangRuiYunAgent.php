@@ -198,7 +198,8 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             'mobile' => $data[$index]['phone'],
             'content' => $data[$index]['msg'] . $this->unsubscribe,
             'type' => $data[$index]['type'] ?? 0,
-            'key'=>$data[$index]['key']??$data[$index]['phone']
+            'key'=>$data[$index]['key']??$data[$index]['phone'],
+            'act_id'=>$data[$index]['act_id']??0,
         ];
         isset($data[$index]['tenant_id']) ? $info['tenant_id'] = $data[$index]['tenant_id'] : '';
         $param = $this->_getAccount();
