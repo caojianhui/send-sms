@@ -252,7 +252,7 @@ trait TableStoreTrait
      * 更新数据
      */
     public static function updateRows(array $info, array $where,$tableName='sms_logs'){
-        if (isEmpty($where) || isEmpty($info)) return [];
+        if (empty($where) || empty($info)) return [];
         $query = self::setUpdateData($info);
         $where = self::setUpdateWhere($where);
         $otsClient = self::getClient();
