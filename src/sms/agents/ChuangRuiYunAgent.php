@@ -126,7 +126,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         $pool = new Pool($client, $requests($data), [
             'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data) {
-                $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
+                $result = json_decode($response->getBody()->getContents(), true);
                 $info = $this->_getInfo($data, $index);
                 Cache::store('redis')->put($info['key'],$info,config('sendsms.cache_time'));
                 $this->sendLogSms($info, $result);
@@ -230,7 +230,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data, $type,$tenantId) {
                 // this is delivered each successful response
-                $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
+                $result = json_decode($response->getBody()->getContents(), true);
                 $config = config('sendsms.log');
                 if ($result['code'] == 0) {
                     $re = $result['data'];

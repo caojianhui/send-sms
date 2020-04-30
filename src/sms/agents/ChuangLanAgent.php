@@ -116,7 +116,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data) {
                 // this is delivered each successful response
-                $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
+                $result = json_decode($response->getBody()->getContents(), true);
                 $info = $this->_getInfo($data, $index);
                 Cache::store('redis')->put($info['key'],$info,config('sendsms.cache_time'));
                 $this->sendLogSms($info, $result);
@@ -178,7 +178,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data) {
                 // this is delivered each successful response
-                $result = \GuzzleHttp\json_decode($response->getBody()->getContents(), true);
+                $result = json_decode($response->getBody()->getContents(), true);
                 $config = config('sendsms.log');
                 if ($result['ret'] == 0) {
                     $re = $result['result'];
