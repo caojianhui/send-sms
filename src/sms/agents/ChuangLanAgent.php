@@ -166,6 +166,8 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
 
         $data = $params['msgids'];
         $type = $params['type'];
+        $tenantId = $params['tenant_id'];
+
         $client = new Client();
         $requests = function ($data) use ($type,$url) {
             $total = collect($data)->count() / 100;
@@ -177,14 +179,15 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
         };
         $pool = new Pool($client, $requests($data), [
             'concurrency' => config('sendsms.concurrency'),
-            'fulfilled' => function ($response, $index) use ($data) {
+            'fulfilled' => function ($response, $index) use ($data,$tenantId) {
                 // this is delivered each successful response
                 $result = json_decode($response->getBody()->getContents(), true);
                 $config = config('sendsms.log');
                 if ($result['ret'] == 0) {
                     $re = $result['result'];
-                    $info = $this->_getInfo($data, $index);
-                    $this->updateLog($config,$re,$info);
+                    if(!empty($re)){
+                        $this->updateLog($config,$re,$tenantId);
+                    }
                 }
             },
             'rejected' => function ($reason, $index) {
@@ -205,7 +208,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
      * @throws \Aliyun\OTS\OTSClientException
      * @throws \Aliyun\OTS\OTSServerException
      */
-    private function updateLog($config, $re, $info){
+    private function updateLog($config, $re, $tenantId){
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
             foreach ($re as $item) {
                 $data = [
@@ -221,12 +224,12 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                     'result_status' => $item['status'] ?? '',
                     'tenant_id' => $info['tenant_id']
                 ];
-                $where = ['msgid' => $item['msgId'],'agents'=>$this->agent,'tenant_id' => $info['tenant_id']];
+                $where = ['msgid' => $item['msgId'],'agents'=>$this->agent,'tenant_id' => $tenantId];
                 $model = self::getRows($where);
                 if(!empty($model)){
                     $data['id'] = $model['id'];
                     $data['is_back']=1;
-                    return self::updateRows($data,$where);
+                    self::updateRows($data,$where);
                 }
             }
         }

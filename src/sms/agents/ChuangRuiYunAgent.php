@@ -235,7 +235,9 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                 $config = config('sendsms.log');
                 if ($result['code'] == 0) {
                     $re = $result['data'];
-                    $this->updateLog($config,$re,$type,$tenantId);
+                    if(!empty($re)){
+                        $this->updateLog($config,$re,$type,$tenantId);
+                    }
                 }
             },
             'rejected' => function ($reason, $index) {
@@ -277,7 +279,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                 if(!empty($model)){
                     $data['id'] = $model['id'];
                     $data['is_back']=1;
-                    return self::updateRows($data,$where);
+                    self::updateRows($data,$where);
                 }
             }
         }
