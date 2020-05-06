@@ -211,28 +211,33 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
      */
     private function updateLog($config, $re, $tenantId){
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
-            foreach ($re as $item) {
-                $data = [
-                    'update_at' => date('Y-m-d H:i:s'),
-                    'result_status' => $item['status'] ?? '',
-                ];
-                DB::where('agents', $this->agent)->where('msgid', $item['msgId'])
-                    ->update($data);
-            }
-        }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
-            foreach ($re as $item) {
-                $data = [
-                    'result_status' => $item['status'] ?? '',
-                    'tenant_id' => $tenantId,
-                ];
-                $where = ['msgid' => (string)$item['msgId'],'tenant_id'=>$tenantId,'agents'=>$this->agent,'is_back'=>0];
-                $model = self::getRows($where);
-                if(!empty($model)){
-                    $data['id'] = $model['id'];
-                    $data['is_back']=1;
-                    self::updateRows($data,$where);
+            collect($re)->chunk(100)->each(function ($values)use ($tenantId) {
+                foreach ($values as $item) {
+                    $data = [
+                        'update_at' => date('Y-m-d H:i:s'),
+                        'result_status' => $item['status'] ?? '',
+                    ];
+                    DB::where('agents', $this->agent)->where('msgid', $item['msgId'])
+                        ->update($data);
                 }
-            }
+            });
+        }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
+            collect($re)->chunk(100)->each(function ($values)use ($tenantId) {
+
+                foreach ($values as $item) {
+                    $data = [
+                        'result_status' => $item['status'] ?? '',
+                        'tenant_id' => $tenantId,
+                    ];
+                    $where = ['msgid' => (string)$item['msgId'], 'tenant_id' => $tenantId, 'agents' => $this->agent, 'is_back' => 0];
+                    $model = self::getRows($where);
+                    if (!empty($model)) {
+                        $data['id'] = $model['id'];
+                        $data['is_back'] = 1;
+                        self::updateRows($data, $where);
+                    }
+                }
+            });
         }
     }
     /**

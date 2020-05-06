@@ -259,30 +259,35 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      */
     private function updateLog($config, $re, $type, $tenantId){
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
-            foreach ($re as $item) {
-                $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
-                $data = [
-                    'update_at' => date('Y-m-d H:i:s'),
-                    'result_status' => $item['deliverResult'] ?? '',
-                ];
-                DB::where('agents', $this->agent)->where('msgid', $msgid)
-                    ->update($data);
-            }
-        }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
-            foreach ($re as $item) {
-                $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
-                $data = [
-                    'result_status' => $item['deliverResult'] ?? '',
-                    'tenant_id' => $tenantId
-                ];
-                $where = ['msgid' => (string)$msgid,'agents'=>$this->agent,'tenant_id'=>$tenantId,'is_back'=>0];
-                $model = self::getRows($where);
-                if(!empty($model)){
-                    $data['id'] = $model['id'];
-                    $data['is_back']=1;
-                    self::updateRows($data,$where);
+            collect($re)->chunk(100)->each(function ($values)use ($type,$tenantId) {
+                foreach ($values as $item) {
+                    $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
+                    $data = [
+                        'update_at' => date('Y-m-d H:i:s'),
+                        'result_status' => $item['deliverResult'] ?? '',
+                    ];
+                    DB::where('agents', $this->agent)->where('msgid', $msgid)
+                        ->update($data);
                 }
-            }
+            });
+        }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
+            collect($re)->chunk(100)->each(function ($values)use ($type,$tenantId){
+                foreach ($values as $item) {
+                    $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
+                    $data = [
+                        'result_status' => $item['deliverResult'] ?? '',
+                        'tenant_id' => $tenantId
+                    ];
+                    $where = ['msgid' => (string)$msgid,'agents'=>$this->agent,'tenant_id'=>$tenantId,'is_back'=>0];
+                    $model = self::getRows($where);
+                    if(!empty($model)){
+                        $data['id'] = $model['id'];
+                        $data['is_back']=1;
+                        self::updateRows($data,$where);
+                    }
+                }
+            });
+
         }
     }
 
