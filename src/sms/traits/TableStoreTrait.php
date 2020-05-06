@@ -256,19 +256,17 @@ trait TableStoreTrait
     public static function updateRows(array $info, array $where=[], $tableName='sms_logs'){
         if (empty($info)) return [];
         $query = self::setUpdateData($info);
-//        $where = self::setUpdateWhere($where);
+        $where = self::setUpdateWhere($where);
         $otsClient = self::getClient();
         $request = array (
             'table_name' => $tableName,
-//            'condition' => [
-//                'row_existence' => RowExistenceExpectationConst::CONST_EXPECT_EXIST,
-//                'column_condition' => [
-//                    'logical_operator' =>LogicalOperatorConst::CONST_AND,
-//                    'sub_conditions' => $where
-//                ]
-//            ],
-            'condition' => RowExistenceExpectationConst::CONST_IGNORE,
-
+            'condition' => [
+                'row_existence' => RowExistenceExpectationConst::CONST_EXPECT_EXIST,
+                'column_condition' => [
+                    'logical_operator' =>LogicalOperatorConst::CONST_AND,
+                    'sub_conditions' => $where
+                ]
+            ],
             'primary_key' => array ( // 主键
                 array('tenant_id', $info['tenant_id']),
                 array('id', $info['id']),
