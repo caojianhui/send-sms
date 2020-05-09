@@ -18,15 +18,15 @@ class CreateSmsLogsTable extends Migration
                 $table->bigIncrements('id');
 
                 //to:用于存储手机号
-                $table->text('to')->default('')->comment('用于存储手机号，多个以逗号分割');
+                $table->char('to',11)->default('')->comment('用于存储手机号，多个以逗号分割')->index();
 
                 //temp_id:存储模板标记，用于存储任何第三方服务商提供的短信模板标记/id
                 $table->string('temp_id')->default(null)->nullable()->comment('第三方代理器模版ID');
                 $table->tinyInteger('type', false, true)->default(1)->comment('短信类型：1营销短信0通知短信');
                 $table->string('msgid', 255)->default(null)->comment('第三方消息ID，唯一标识');
 
-                $table->integer('tenant_id')->default(0)->nullable()->comment('发送商户ID');
-                $table->integer('act_id')->default(0)->nullable()->comment('活动ID');
+                $table->integer('tenant_id')->default(0)->nullable()->comment('发送商户ID')->index();
+                $table->integer('act_id')->default(0)->nullable()->comment('活动ID')->index();
                 //content:内容
                 $table->text('content')->default(null)->comment('短信内容');
                 //voice_code:语言验证码code
