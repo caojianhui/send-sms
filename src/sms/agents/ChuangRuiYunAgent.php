@@ -7,6 +7,7 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms, ClientSms, ReportSms, BalanceSms
 {
@@ -167,12 +168,34 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             'result_info' => json_encode($result),
             'type' => $params['type'] ?? self::TYPE_MARKET,
             'msgid' => $result['code'] == '0' ? ($result['batchId'] ?? '') : ($result['smUuid'] ?? ''),
-            'act_id'=>$params['act_id']??0
+            'act_id'=>$params['act_id']??0,
+            'number'=> $this->getEmsNums($params['content']),
         ];
         if (isset($params['tenant_id'])) {
             $data['tenant_id'] = $params['tenant_id'];
         }
         $this->log($data);
+    }
+
+    /**
+     * @param $message
+     * @return float|int
+     * 计算短信条数
+     */
+    private function getEmsNums($message)
+    {
+        $sign = config('sendsms.default_sign');
+        $checked = strpos($message,$sign);
+        if($checked ===false){
+            $message = $message.$sign;
+        }
+        $length = Str::length($message);
+        if($length>70){
+            $count =  ceil($length/67);
+        }else{
+            $count = 1;
+        }
+        return (int)$count;
     }
 
     /**

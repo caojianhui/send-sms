@@ -51,6 +51,7 @@ return [
         'ConnectionTimeout'=>env('CONNECTIONTIMEOUT',1000.0),
         'SocketTimeout'=>env('SOCKETTIMEOUT',1000.0)
     ],
+    'default_sign'=> '【测试签名】',
 
 
     /*
