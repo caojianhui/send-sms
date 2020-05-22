@@ -274,11 +274,13 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
             collect($re)->chunk(100)->each(function ($values)use ($type,$tenantId){
                 foreach ($values as $item) {
                     $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
+//                    info('send_msgid='.$msgid);
+//                    info('send_result_item='.json_encode($item));
                     $data = [
-                        'result_status' => $item['deliverResult'] ?? '',
-                        'tenant_id' => $tenantId
+                        'result_status' => (string)$item['deliverResult'] ?? '',
+                        'tenant_id' => (int)$tenantId
                     ];
-                    $where = ['msgid' => (string)$msgid,'agents'=>$this->agent,'tenant_id'=>$tenantId,'is_back'=>0];
+                    $where = ['msgid' =>(string)$msgid,'agents'=>$this->agent,'tenant_id'=>(int)$tenantId,'is_back'=>0];
                     $model = self::getRows($where);
                     if(!empty($model)){
                         $data['id'] = $model['id'];
