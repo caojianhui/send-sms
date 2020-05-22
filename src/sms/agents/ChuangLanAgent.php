@@ -188,7 +188,13 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                     if(!empty($re)){
                         $this->updateLog($config,$re,$tenantId);
                         $this->result(Agent::SUCCESS,true);
+                    }else{
+                        $this->result(Agent::SUCCESS, true);
+                        $this->result(Agent::INFO, '返回结果为空');
                     }
+                }else{
+                    $this->result(Agent::SUCCESS, false);
+                    $this->result(Agent::INFO, '查询状态失败:'.json_encode($result));
                 }
             },
             'rejected' => function ($reason, $index) {
