@@ -13,7 +13,7 @@ class LuosimaoAgent extends Agent implements ContentSms, VoiceCode
     protected static $smsUrl = 'http://sms-api.luosimao.com/v1/send.json';
     protected static $voiceCodeUrl = 'http://voice-api.luosimao.com/v1/verify.json';
 
-    public function sendContentSms($to, $content)
+    public function sendContentSms($to, $content,array $data=[])
     {
         // 签名必须在最后面
         if ($content && preg_match('/(【[\\s\\S]*】)/', $content, $matches)) {
