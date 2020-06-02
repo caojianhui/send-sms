@@ -295,7 +295,8 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                         'update_at' => date('Y-m-d H:i:s'),
                         'result_status' => $item['deliverResult'] ?? '',
                     ];
-                    DB::where('agents', $this->agent)->where('msgid', $msgid)
+                    DB::table('sms_logs')->where('agents', $this->agent)->where('msgid', $msgid)
+                        ->where('is_back',0)
                         ->update($data);
                 }
             });
