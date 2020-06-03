@@ -162,6 +162,14 @@ trait TableStoreTrait
                         'is_array' => false
                     ),
                     array(
+                        'field_name' => 'number',
+                        'field_type' => FieldTypeConst::LONG,
+                        'index' => true,
+                        'enable_sort_and_agg' => true,
+                        'store' => true,
+                        'is_array' => false
+                    ),
+                    array(
                         'field_name' => 'agents',
                         'field_type' => FieldTypeConst::KEYWORD,
                         'index' => true,
@@ -237,6 +245,7 @@ trait TableStoreTrait
                 array('agents',$data['agents']??''),
                 array('params',$data['params']??''),
                 array('result_info',$data['result_info']??''),
+                array('number',$data['number']??1),
                 array('sended_at',$data['created_at']?strtotime($data['created_at']):0),
             )
         );
