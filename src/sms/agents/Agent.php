@@ -13,7 +13,7 @@ abstract class Agent
 {
     use TableStoreTrait;
     const SUCCESS = 'success';
-    const RESULT_DATA = null;
+    const RESULT_DATA = 'data';
     const INFO = 'info';
     const CODE = 'code';
     const LOG_FILE_CHANNEL = 'file';
@@ -342,14 +342,6 @@ abstract class Agent
         $config = config('sendsms.log');
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
             if (Schema::hasTable('sms_logs')) {
-//                if (strpos($data['to'], ',') !== false) {
-//                    $mobiles = explode(',', $data['to']);
-//                    collect($mobiles)->map(function ($item) use ($data) {
-//                        $data['to'] = $item;
-//                        DB::table('sms_logs')->insert($data);
-//                    });
-//                    DB::table('sms_logs')->insert($data);
-//                }
                 $data['created_at'] = date('Y-m-d H:i:s');
                 DB::table('sms_logs')->insert($data);
             }

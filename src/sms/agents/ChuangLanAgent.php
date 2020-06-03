@@ -253,10 +253,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             });
         }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
             collect($re)->chunk(100)->each(function ($values)use ($tenantId) {
-
                 foreach ($values as $item) {
-//                    info('send_msgid='.(string)$item['msgId']);
-//                    info('send_result_item='.json_encode($item));
                     $data = [
                         'result_status' => (string)$item['status'] ?? '',
                     ];
@@ -299,7 +296,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
         ];
         if ($type == self::TYPE_MARKET) {
             $param['account'] = config('sendsms.agents.' . $this->agent . '.market.account');
-            $param['password'] = config('sendsms.agents.' . $this->agent . '.market.account');
+            $param['password'] = config('sendsms.agents.' . $this->agent . '.market.password');
         }
         return $param;
     }

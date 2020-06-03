@@ -43,6 +43,7 @@ class CreateSmsLogsTable extends Migration
                 //代理器使用日志，记录每个代理器的发送状态，可用于排错
                 $table->text('result_info')->nullable()->comment('返回结果');
                 $table->integer('refund_at')->default(0)->comment('退款时间');
+                $table->integer('number')->default(1)->comment('短信条数');
 
                 $table->timestamps();
                 $table->softDeletes();
