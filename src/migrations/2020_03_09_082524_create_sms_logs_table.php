@@ -44,7 +44,7 @@ class CreateSmsLogsTable extends Migration
                 $table->text('result_info')->nullable()->comment('返回结果');
                 $table->integer('refund_at')->default(0)->comment('退款时间');
                 $table->integer('number')->default(1)->comment('短信条数');
-
+                $table->integer('sended_at')->default(1)->comment('发送时间');
                 $table->timestamps();
                 $table->softDeletes();
                 $table->engine = 'InnoDB';

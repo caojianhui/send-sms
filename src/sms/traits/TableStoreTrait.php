@@ -246,7 +246,7 @@ trait TableStoreTrait
                 array('params',$data['params']??''),
                 array('result_info',$data['result_info']??''),
                 array('number',$data['number']??1),
-                array('sended_at',$data['created_at']?strtotime($data['created_at']):0),
+                array('sended_at',$data['sended_at']?strtotime($data['sended_at']):0),
             )
         );
         return  $otsClient->putRow ($request);

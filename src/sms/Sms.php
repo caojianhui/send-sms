@@ -2,6 +2,9 @@
 
 namespace Send\Sms;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Send\Sms\Traits\TableStoreTrait;
 use Toplan\TaskBalance\Driver;
 use Toplan\TaskBalance\Task;
 
@@ -18,6 +21,12 @@ class Sms
     const INTERFACE_TYPE_SMS = 1;//短信接口
     const INTERFACE_TYPE_REPORT = 2;//获取短信状态接口
     const INTERFACE_TYPE_BALANCE = 3;//获取短信余额接口
+    const INTERFACE_TYPE_ACCEPT = 4;//更新短信接收状态
+
+
+    const LOG_FILE_CHANNEL = 'file';
+    const LOG_DATABASE_CHANNEL = 'database';
+    const LOG_TABLESTORE_CHANNEL = 'tablestore';
 
     /**
      * Task instance.
@@ -230,6 +239,7 @@ class Sms
             $template = isset($templates[$driver->name]) ? $templates[$driver->name] : null;
             $file = isset($files[$driver->name]) ? $files[$driver->name] : null;
             $params = isset($params[$driver->name]) ? $params[$driver->name] : [];
+
             if ($interfaces === self::INTERFACE_TYPE_REPORT) {
                 $agent->getReports($data);
             } elseif ($interfaces === self::INTERFACE_TYPE_SMS) {
@@ -242,6 +252,8 @@ class Sms
                 }
             } elseif ($interfaces === self::INTERFACE_TYPE_BALANCE) {
                 $agent->getBalance($params);
+            } elseif ($interfaces === self::INTERFACE_TYPE_ACCEPT) {
+                $agent->accepts($data);
             }
             $result = $agent->result();
             if ($result['success']) {
@@ -554,8 +566,8 @@ class Sms
      */
     public function interfaces($interfaces)
     {
-        if ($interfaces !== self::INTERFACE_TYPE_BALANCE && $interfaces !== self::INTERFACE_TYPE_SMS && $interfaces !== self::INTERFACE_TYPE_REPORT) {
-            throw new SmsException('Expected the parameter equals to `Sms::INTERFACE_TYPE_SMS` or `Sms::INTERFACE_TYPE_BALANCE`,or `Sms::INTERFACE_TYPE_REPORT`.');
+        if ($interfaces !== self::INTERFACE_TYPE_BALANCE && $interfaces !== self::INTERFACE_TYPE_SMS && $interfaces !== self::INTERFACE_TYPE_REPORT&& $interfaces !== self::INTERFACE_TYPE_ACCEPT) {
+            throw new SmsException('Expected the parameter equals to `Sms::INTERFACE_TYPE_SMS` or `Sms::INTERFACE_TYPE_BALANCE`,or `Sms::INTERFACE_TYPE_REPORT`or `Sms::INTERFACE_TYPE_ACCEPT` ');
         }
         $this->smsData['interfaces'] = $interfaces;
         return $this;
@@ -903,5 +915,65 @@ class Sms
         } elseif (is_string($options[$key])) {
             $options[$key] = $serializer->unserialize($options[$key]);
         }
+    }
+
+
+    /**
+     * @param array $param
+     * @return array
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     */
+    public static function Logs(array $param=[]){
+        $param['is_back']=1;
+        $result = self::getSmsLogs($param);
+        if(!empty($result)){
+            foreach ($result as $key =>$value){
+                $result[$key] = get_object_vars($value);
+            }
+        }
+        return ['success'=>true,'msg'=>'获取成功','data'=>$result];
+    }
+
+
+    /**
+     * @param array $params
+     * @return array
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     */
+    protected static function getSmsLogs(array $params){
+        $where = ['is_back'=>1];
+        if (isset($params['agents'])){
+            $where['agents'] = $params['agents'];
+        }
+        if (isset($params['tenant_id']) && !empty($params['tenant_id']) ){
+            $where['tenant_id'] = $params['tenant_id'];
+        }
+        if (isset($params['act_id'])  && !empty($params['act_id'])){
+            $where['act_id'] = $params['act_id'];
+        }
+        $limit = $params['limit']??50;
+        $config = config('sendsms.log');
+        if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
+            if (Schema::hasTable('sms_logs')) {
+                $page = $params['page']??1;
+                $data = DB::table('sms_logs')->where($where)
+                    ->select('tenant_id','act_id','to','result_status','number')
+                    ->orderBy('id','desc')->get();
+                $data = $data->forPage($page, $limit);
+                return $data->toArray();
+            }
+        } elseif ($config['channel'] == self::LOG_FILE_CHANNEL) {
+            return [];
+        }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL) {
+            $tableConfig = config('sendsms.table_store');
+            if(!empty($tableConfig['AccessKeyID']) && !empty($tableConfig['AccessKeySecret'])){
+                $nextToken = $params['next_token']??null;
+                $data = TableStoreTrait::getPageList($where,$limit,$nextToken);
+                return $data->toArray();
+            }
+        }
+
     }
 }

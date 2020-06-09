@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Send\Sms\sms\interfaces\AcceptLogSms;
+use Send\Sms\sms\interfaces\BackLogSms;
 use Send\Sms\Traits\TableStoreTrait;
 
 abstract class Agent
@@ -182,6 +184,7 @@ abstract class Agent
 
     /**
      * @param array $params
+     * 获取短信剩余条数
      */
     public function getBalance(array $params)
     {
@@ -189,6 +192,21 @@ abstract class Agent
         $this->params($params, true);
         if ($params && $this instanceof BalanceSms) {
             $this->getBalanceSms($params);
+        }
+    }
+
+
+    /**
+     * @param array $params
+     * 更新短信接收状态
+     */
+    public function accepts(array $params=[])
+    {
+        $params['is_back']=0;
+        $this->reset();
+        $this->params($params, true);
+        if ($params && $this instanceof AcceptLogSms) {
+            $this->acceptLog($params);
         }
     }
 
@@ -342,6 +360,7 @@ abstract class Agent
         $config = config('sendsms.log');
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
             if (Schema::hasTable('sms_logs')) {
+                $data['sended_at'] = time();
                 $data['created_at'] = date('Y-m-d H:i:s');
                 DB::table('sms_logs')->insert($data);
             }
@@ -356,11 +375,10 @@ abstract class Agent
         }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL) {
             $tableConfig = config('sendsms.table_store');
             if(!empty($tableConfig['AccessKeyID']) && !empty($tableConfig['AccessKeySecret'])){
-                $data['created_at'] = date('Y-m-d H:i:s');
+                $data['sended_at'] = time();
                 self::putRow($data);
             }
         }
     }
-
 
 }

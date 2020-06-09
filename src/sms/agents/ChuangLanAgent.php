@@ -8,10 +8,13 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Send\Sms\sms\interfaces\AcceptLogSms;
+use Send\Sms\sms\interfaces\BackLogSms;
 
 
-class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, ReportSms, BalanceSms
+class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, ReportSms, BalanceSms,AcceptLogSms
 {
     //发送短信接口URL
     protected static $sendUrl = 'http://smsbj1.253.com/msg/send/json';
@@ -51,13 +54,11 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
     /**
      * @param $result
      */
-    protected function setResult($result, $params, $url)
+    protected function setResult($result, $params)
     {
 
         if ($result['request']) {
-            if ($url == self::$sendUrl) {
-                $this->sendLogSms($params, json_decode($result['response'], true));
-            }
+            $this->sendLogSms($params, json_decode($result['response'], true));
             $this->result(Agent::INFO, $result['response']);
             $result = json_decode($result['response'], true);
             $this->result(Agent::CODE, $result['code']);
@@ -116,7 +117,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
     }
 
     /**
-     * @param array $data
+     * @param array $data(phone,msg)
      * @return mixed|void
      *异步发送多个请求
      */
@@ -138,22 +139,21 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
         $pool = new Pool($client, $requests($data), [
             'concurrency' => config('sendsms.concurrency'),
             'fulfilled' => function ($response, $index) use ($data) {
-                // this is delivered each successful response
                 $result = json_decode($response->getBody()->getContents(), true);
                 $info = $this->_getInfo($data, $index);
                 Cache::store('redis')->put($info['key'],$info,config('sendsms.cache_time'));
                 $this->sendLogSms($info, $result);
-                if ($result['code'] == '0') {
+                if ($result['code'] === '0') {
                     $this->result(Agent::SUCCESS, true);
                     if (isset($result['balance'])) {
                         $this->result(Agent::RESULT_DATA, $result);
                     }
                 } else {
+                    $this->result(Agent::SUCCESS, false);
                     $this->result(Agent::INFO, $result['errorMsg']);
                 }
             },
             'rejected' => function ($reason, $index) {
-                // this is delivered each failed request
                 $this->result(Agent::INFO, $reason);
             },
         ]);
@@ -186,11 +186,8 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
     public function getReportSms(array $params)
     {
         $url = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$reportUrl;
-
         $data = $params['msgids'];
         $type = $params['type'];
-        $tenantId = $params['tenant_id'];
-
         $client = new Client();
         $requests = function ($data) use ($type,$url) {
             $total = collect($data)->count() / 100;
@@ -202,14 +199,14 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
         };
         $pool = new Pool($client, $requests($data), [
             'concurrency' => config('sendsms.concurrency'),
-            'fulfilled' => function ($response, $index) use ($data,$tenantId) {
+            'fulfilled' => function ($response, $index) use ($data) {
                 // this is delivered each successful response
                 $result = json_decode($response->getBody()->getContents(), true);
                 $config = config('sendsms.log');
                 if ($result['ret'] == 0) {
                     $re = $result['result'];
                     if(!empty($re)){
-                        $this->updateLog($config,$re,$tenantId);
+                        $this->updateLog($config,$re);
                         $this->result(Agent::SUCCESS,true);
                     }else{
                         $this->result(Agent::SUCCESS, true);
@@ -238,13 +235,14 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
      * @throws \Aliyun\OTS\OTSClientException
      * @throws \Aliyun\OTS\OTSServerException
      */
-    private function updateLog($config, $re, $tenantId){
+    private function updateLog($config, $re){
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
-            collect($re)->chunk(100)->each(function ($values)use ($tenantId) {
+            collect($re)->chunk(100)->each(function ($values){
                 foreach ($values as $item) {
                     $data = [
-                        'update_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
                         'result_status' => $item['status'] ?? '',
+                        'is_back'=>1,
                     ];
                     DB::table('sms_logs')->where('agents', $this->agent)->where('msgid', $item['msgId'])
                         ->where('is_back',0)
@@ -252,7 +250,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                 }
             });
         }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
-            collect($re)->chunk(100)->each(function ($values)use ($tenantId) {
+            collect($re)->chunk(100)->each(function ($values){
                 foreach ($values as $item) {
                     $data = [
                         'result_status' => (string)$item['status'] ?? '',
@@ -299,6 +297,70 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
             $param['password'] = config('sendsms.agents.' . $this->agent . '.market.password');
         }
         return $param;
+    }
+
+
+    /**
+     * @param array $params
+     * @return mixed|void
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     */
+    public function acceptLog(array $params)
+    {
+        $where = ['is_back' => 0];
+        if (isset($params['tenant_id']) && !empty($params['tenant_id']) ){
+            $where['tenant_id'] = $params['tenant_id'];
+        }
+        if (isset($params['act_id'])  && !empty($params['act_id'])){
+            $where['act_id'] = $params['act_id'];
+        }
+        $config = config('sendsms.log');
+        if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
+            if (Schema::hasTable('sms_logs')) {
+                $lists = DB::table('sms_logs')->where($where)
+                    ->where('msgid', '!=', '')
+                    ->get();
+                if ($lists->isNotEmpty()){
+                    $this->sendReport($lists);
+                }
+            }
+        } elseif ($config['channel'] == self::LOG_FILE_CHANNEL) {
+            $this->result(self::SUCCESS, false);
+            $this->result(self::RESULT_DATA, []);
+        } elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL) {
+            $tableConfig = config('sendsms.table_store');
+            if (!empty($tableConfig['AccessKeyID']) && !empty($tableConfig['AccessKeySecret'])) {
+                $limit = 100;
+                $total = self::getTotal($where);
+                if($total>0){
+                    $lists = self::getPageList($where,$limit);
+                    if($lists['data']->isNotEmpty()){
+                        $this->sendReport($lists['data']);
+                    }
+                    while(!is_null($lists['next_token'])){
+                        $lists = self::getPageList($where,100,$lists['next_token']);
+                        if($lists['data']->isNotEmpty()){
+                           $this->sendReport($lists['data']);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @param $data
+     * @return mixed
+     */
+    private function sendReport($data){
+        return $data->groupBy('type')->map(function ($items,$key){
+            $param['type'] = $key;
+            $param['msgids'] = $items->pluck('msgid')->toArray();
+            if (!empty($param['msgid'])) {
+                $this->getReportSms($param);
+            }
+        });
     }
 
 

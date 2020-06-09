@@ -7,9 +7,13 @@ use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use Send\Sms\sms\interfaces\AcceptLogSms;
+use Send\Sms\sms\interfaces\BackLogSms;
+use Send\Sms\Traits\TableStoreTrait;
 
-class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms, ClientSms, ReportSms, BalanceSms
+class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms, ClientSms, ReportSms, BalanceSms,AcceptLogSms
 {
     protected static $sendCodeUrl = 'http://api.1cloudsp.com/api/v2/single_send';
     protected static $groupSendUrl = 'http://api.1cloudsp.com/api/v2/send';
@@ -76,18 +80,16 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         $result = $this->curlPost($url, [], [
             CURLOPT_POSTFIELDS => http_build_query($params),
         ]);
-        $this->setResult($result, $params, $url);
+        $this->setResult($result, $params);
     }
 
     /**
      * @param $result
      */
-    protected function setResult($result, $params, $url)
+    protected function setResult($result, $params)
     {
         if ($result['request']) {
-            if ($url !== self::$balanceUrl && $url !== self::$reportUrl) {
-                $this->sendLogSms($params, json_decode($result['response'], true));
-            }
+            $this->sendLogSms($params, json_decode($result['response'], true));
             $this->result(Agent::INFO, $result['response']);
             $result = json_decode($result['response'], true);
             $this->result(Agent::CODE, $result['code']);
@@ -239,10 +241,8 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
     {
         $reportUrl = config('sendsms.is_dev')==true?config('sendsms.dev_reports_url'):self::$reportUrl;
         $data = $params['msgids'];
-        $tenantId = $params['tenant_id'];
         $client = new Client();
-        $type = $params['type'];
-        $requests = function ($data) use ($type,$reportUrl) {
+        $requests = function ($data) use ($reportUrl) {
             $total = collect($data)->count() / 100;
             for ($i = 0; $i < $total; $i++) {
                 $info = $this->_getAccount();
@@ -252,14 +252,14 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         };
         $pool = new Pool($client, $requests($data), [
             'concurrency' => config('sendsms.concurrency'),
-            'fulfilled' => function ($response, $index) use ($data, $type,$tenantId) {
+            'fulfilled' => function ($response, $index) use ($data) {
                 // this is delivered each successful response
                 $result = json_decode($response->getBody()->getContents(), true);
                 $config = config('sendsms.log');
                 if ($result['code'] == 0) {
                     $re = $result['data'];
                     if(!empty($re)){
-                        $this->updateLog($config,$re,$type,$tenantId);
+                        $this->updateLog($config,$re);
                         $this->result(Agent::SUCCESS,true);
                     }else{
                         $this->result(Agent::SUCCESS, true);
@@ -282,40 +282,42 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
     /**
      * @param $config
      * @param $re
-     * @param $type
      * @throws \Aliyun\OTS\OTSClientException
      * @throws \Aliyun\OTS\OTSServerException
      */
-    private function updateLog($config, $re, $type, $tenantId){
+    private function updateLog($config, $re){
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
-            collect($re)->chunk(100)->each(function ($values)use ($type,$tenantId) {
+            collect($re)->chunk(100)->each(function ($values){
                 foreach ($values as $item) {
-                    $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
-                    $data = [
-                        'update_at' => date('Y-m-d H:i:s'),
-                        'result_status' => $item['deliverResult'] ?? '',
-                    ];
-                    DB::table('sms_logs')->where('agents', $this->agent)->where('msgid', $msgid)
-                        ->where('is_back',0)
-                        ->update($data);
+                    $msgid = isset($item['batchId'])? $item['batchId']:($item['smUuid']??'');
+                    if (!empty($msgid)){
+                        $data = [
+                            'result_status' => $item['deliverResult'] ?? '',
+                            'updated_at'=>date('Y-m-d H:i:s'),
+                            'is_back'=>1,
+                        ];
+                        DB::table('sms_logs')->where('agents', $this->agent)->where('msgid', $msgid)
+                            ->where('is_back',0)
+                            ->update($data);
+                    }
                 }
             });
         }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
-            collect($re)->chunk(100)->each(function ($values)use ($type,$tenantId){
+            collect($re)->chunk(100)->each(function ($values){
                 foreach ($values as $item) {
-                    $msgid = $type == self::TYPE_MARKET ? $item['batchId'] : $item['smUuid'];
-//                    info('send_msgid='.$msgid);
-//                    info('send_result_item='.json_encode($item));
-                    $data = [
-                        'result_status' => (string)$item['deliverResult'] ?? '',
-                    ];
-                    $where = ['msgid' =>(string)$msgid,'agents'=>(string)$this->agent,'is_back'=>0];
-                    $model = self::getRows($where);
-                    if(!empty($model)){
-                        $data['id'] = $model['id'];
-                        $data['is_back']=1;
-                        $data['tenant_id'] =  $model['tenant_id'];
-                        self::updateRows($data,$where);
+                    $msgid = isset($item['batchId'])? $item['batchId']:($item['smUuid']??'');
+                    if(!empty($msgid)){
+                        $data = [
+                            'result_status' => (string)$item['deliverResult'] ?? '',
+                        ];
+                        $where = ['msgid' =>(string)$msgid,'agents'=>(string)$this->agent,'is_back'=>0];
+                        $model = self::getRows($where);
+                        if(!empty($model)){
+                            $data['id'] = $model['id'];
+                            $data['is_back']=1;
+                            $data['tenant_id'] =  $model['tenant_id'];
+                            self::updateRows($data,$where);
+                        }
                     }
                 }
             });
@@ -333,4 +335,67 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         $account = $this->_getAccount();
         $this->request($account, $balanceUrl);
     }
+
+
+
+
+    /**
+     * @param array $params
+     * @return mixed|void
+     * @throws \Aliyun\OTS\OTSClientException
+     * @throws \Aliyun\OTS\OTSServerException
+     */
+    public function acceptLog(array $params)
+    {
+        $where = ['is_back' => 0];
+        if (isset($params['tenant_id']) && !empty($params['tenant_id']) ){
+            $where['tenant_id'] = $params['tenant_id'];
+        }
+        if (isset($params['act_id'])  && !empty($params['act_id'])){
+            $where['act_id'] = $params['act_id'];
+        }
+        $config = config('sendsms.log');
+        if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
+            if (Schema::hasTable('sms_logs')) {
+                DB::table('sms_logs')->where($where)
+                    ->where('msgid', '!=', '')
+                    ->chunkById(1000,function ($items) {
+                        $param['msgids'] = $items->pluck('msgid')->toArray();
+                        if (!empty($param['msgids'])) {
+                            $this->getReportSms($param);
+                        }
+                    });
+            }
+        } elseif ($config['channel'] == self::LOG_FILE_CHANNEL) {
+            $this->result(self::SUCCESS, false);
+            $this->result(self::RESULT_DATA, []);
+        } elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL) {
+            $tableConfig = config('sendsms.table_store');
+            if (!empty($tableConfig['AccessKeyID']) && !empty($tableConfig['AccessKeySecret'])) {
+                $limit = 100;
+                $total = self::getTotal($where);
+                if($total>0){
+                    $lists = self::getPageList($where,$limit);
+                    if($lists['data']->isNotEmpty()){
+                        $param['msgids'] = $lists['data']->pluck('msgid')->toArray();
+                        if (!empty($param['msgids'])) {
+                            $this->getReportSms($param);
+                        }
+                    }
+                    while(!is_null($lists['next_token'])){
+                        $lists = self::getPageList($where,100,$lists['next_token']);
+                        if($lists['data']->isNotEmpty()){
+                            $param['msgid'] = $lists['data']->pluck('msgid')->toArray();
+                            if (!empty($param['msgids'])) {
+                                $this->getReportSms($param);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+
 }

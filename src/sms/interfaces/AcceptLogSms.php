@@ -4,12 +4,12 @@
 namespace Send\Sms\sms\interfaces;
 
 
-interface AcceptSms
+interface AcceptLogSms
 {
 
     /**
      * @param array $params
      * @return mixed
      */
-    public function accpets(array $params);
+    public function acceptLog(array $params);
 }
