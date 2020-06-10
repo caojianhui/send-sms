@@ -929,7 +929,9 @@ class Sms
         $result = self::getSmsLogs($param);
         if(!empty($result)){
             foreach ($result as $key =>$value){
-                $result[$key] = get_object_vars($value);
+                if(is_object($value)){
+                    $result[$key] = get_object_vars($value);
+                }
             }
         }
         return ['success'=>true,'msg'=>'获取成功','data'=>$result];
