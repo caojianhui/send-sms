@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Send\Sms\sms\interfaces\AcceptLogSms;
-use Send\Sms\sms\interfaces\BackLogSms;
 
 
 class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, ReportSms, BalanceSms,AcceptLogSms
@@ -54,11 +53,14 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
     /**
      * @param $result
      */
-    protected function setResult($result, $params)
+    protected function setResult($result, $params,$url)
     {
 
         if ($result['request']) {
-            $this->sendLogSms($params, json_decode($result['response'], true));
+            $sendUrl = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$sendUrl;
+            if ($url == $sendUrl) {
+                $this->sendLogSms($params, json_decode($result['response'], true));
+            }
             $this->result(Agent::INFO, $result['response']);
             $result = json_decode($result['response'], true);
             $this->result(Agent::CODE, $result['code']);

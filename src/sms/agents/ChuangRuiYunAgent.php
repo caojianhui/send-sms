@@ -10,8 +10,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Send\Sms\sms\interfaces\AcceptLogSms;
-use Send\Sms\sms\interfaces\BackLogSms;
-use Send\Sms\Traits\TableStoreTrait;
 
 class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms, ClientSms, ReportSms, BalanceSms,AcceptLogSms
 {
@@ -80,16 +78,20 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         $result = $this->curlPost($url, [], [
             CURLOPT_POSTFIELDS => http_build_query($params),
         ]);
-        $this->setResult($result, $params);
+        $this->setResult($result, $params,$url);
     }
 
     /**
      * @param $result
      */
-    protected function setResult($result, $params)
+    protected function setResult($result, $params,$url)
     {
         if ($result['request']) {
-            $this->sendLogSms($params, json_decode($result['response'], true));
+            $groupUrl = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$groupSendUrl;
+            $sendUrl = config('sendsms.is_dev')==true?config('sendsms.dev_url'):self::$groupSendUrl;
+            if ($url == $groupUrl || $url !==$sendUrl) {
+                $this->sendLogSms($params, json_decode($result['response'], true));
+            }
             $this->result(Agent::INFO, $result['response']);
             $result = json_decode($result['response'], true);
             $this->result(Agent::CODE, $result['code']);

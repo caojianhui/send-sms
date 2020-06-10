@@ -8,7 +8,6 @@ use Illuminate\Support\Facades\Schema;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 use Send\Sms\sms\interfaces\AcceptLogSms;
-use Send\Sms\sms\interfaces\BackLogSms;
 use Send\Sms\Traits\TableStoreTrait;
 
 abstract class Agent
