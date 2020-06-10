@@ -972,6 +972,7 @@ class Sms
             $tableConfig = config('sendsms.table_store');
             if(!empty($tableConfig['AccessKeyID']) && !empty($tableConfig['AccessKeySecret'])){
                 $nextToken = $params['next_token']??null;
+                $limit= $limit>100?100:$limit;
                 $data = TableStoreTrait::getPageList($where,$limit,$nextToken);
                 return $data->toArray();
             }
