@@ -239,29 +239,37 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
             collect($re)->chunk(100)->each(function ($values){
                 foreach ($values as $item) {
-                    $data = [
-                        'updated_at' => date('Y-m-d H:i:s'),
-                        'result_status' => $item['status'] ?? '',
-                        'is_back'=>1,
-                    ];
-                    DB::table('sms_logs')->where('agents', $this->agent)->where('msgid', $item['msgId'])
-                        ->where('is_back',0)
-                        ->update($data);
+                    $msgId = $item['msgId']??'';
+                    $status = $item['status'] ?? '';
+                    if(!empty($msgid) && $status){
+                        $data = [
+                            'updated_at' => date('Y-m-d H:i:s'),
+                            'result_status' => $status,
+                            'is_back'=>1,
+                        ];
+                        DB::table('sms_logs')->where('agents', $this->agent)->where('msgid', $msgId)
+                            ->where('is_back',0)
+                            ->update($data);
+                    }
                 }
             });
         }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
             collect($re)->chunk(100)->each(function ($values){
                 foreach ($values as $item) {
-                    $data = [
-                        'result_status' => (string)$item['status'] ?? '',
-                    ];
-                    $where = ['msgid' => (string)$item['msgId'], 'agents' => (string)$this->agent, 'is_back' => 0];
-                    $model = self::getRows($where);
-                    if (!empty($model)) {
-                        $data['id'] = $model['id'];
-                        $data['is_back'] = 1;
-                        $data['tenant_id'] =  $model['tenant_id'];
-                        self::updateRows($data, $where);
+                    $msgId = (string)$item['msgId']??'';
+                    $status = (string)$item['status'] ?? '';
+                    if(!empty($msgid) && !empty($status)) {
+                        $data = [
+                            'result_status' => $status,
+                        ];
+                        $where = ['msgid' => $msgId, 'agents' => (string)$this->agent, 'is_back' => 0];
+                        $model = self::getRows($where);
+                        if (!empty($model)) {
+                            $data['id'] = $model['id'];
+                            $data['is_back'] = 1;
+                            $data['tenant_id'] = $model['tenant_id'];
+                            self::updateRows($data, $where);
+                        }
                     }
                 }
             });
@@ -308,7 +316,7 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
      */
     public function acceptLog(array $params)
     {
-        $where = ['is_back' => 0];
+        $where = ['is_back' => 0,'status'=>1];
         if (isset($params['tenant_id']) && !empty($params['tenant_id']) ){
             $where['tenant_id'] = $params['tenant_id'];
         }

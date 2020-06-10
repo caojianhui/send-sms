@@ -289,14 +289,15 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
             collect($re)->chunk(100)->each(function ($values){
                 foreach ($values as $item) {
-                    $msgid = isset($item['batchId'])? $item['batchId']:($item['smUuid']??'');
-                    if (!empty($msgid)){
+                    $msgId = isset($item['batchId'])? $item['batchId']:($item['smUuid']??'');
+                    $status = $item['deliverResult']??'';
+                    if (!empty($msgId) && !empty($status) ){
                         $data = [
-                            'result_status' => $item['deliverResult'] ?? '',
+                            'result_status' => $status,
                             'updated_at'=>date('Y-m-d H:i:s'),
                             'is_back'=>1,
                         ];
-                        DB::table('sms_logs')->where('agents', $this->agent)->where('msgid', $msgid)
+                        DB::table('sms_logs')->where('agents', $this->agent)->where('msgid', $msgId)
                             ->where('is_back',0)
                             ->update($data);
                     }
@@ -305,12 +306,13 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
         }elseif ($config['channel'] == self::LOG_TABLESTORE_CHANNEL){
             collect($re)->chunk(100)->each(function ($values){
                 foreach ($values as $item) {
-                    $msgid = isset($item['batchId'])? $item['batchId']:($item['smUuid']??'');
-                    if(!empty($msgid)){
+                    $msgId = isset($item['batchId'])? $item['batchId']:($item['smUuid']??'');
+                     $status = $item['deliverResult']??'';
+                    if(!empty($msgId) && !empty($status)){
                         $data = [
-                            'result_status' => (string)$item['deliverResult'] ?? '',
+                            'result_status' => (string)$status,
                         ];
-                        $where = ['msgid' =>(string)$msgid,'agents'=>(string)$this->agent,'is_back'=>0];
+                        $where = ['msgid' =>(string)$msgId,'agents'=>(string)$this->agent,'is_back'=>0];
                         $model = self::getRows($where);
                         if(!empty($model)){
                             $data['id'] = $model['id'];
@@ -347,7 +349,7 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
      */
     public function acceptLog(array $params)
     {
-        $where = ['is_back' => 0];
+        $where = ['is_back' => 0,'status'=>1];
         if (isset($params['tenant_id']) && !empty($params['tenant_id']) ){
             $where['tenant_id'] = $params['tenant_id'];
         }
