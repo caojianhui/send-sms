@@ -270,6 +270,11 @@ class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, Rep
                             $data['id'] = $model['id'];
                             $data['is_back'] = 1;
                             $data['tenant_id'] = $model['tenant_id'];
+                            $where = [
+                                'id' => $item['id'],
+                                'tenant_id' => $item['tenant_id'],
+                                'msgid' => $item['msgid'],
+                            ];
                             self::updateRows($data, $where);
                         }
                     }
