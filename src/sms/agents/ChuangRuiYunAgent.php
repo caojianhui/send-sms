@@ -321,9 +321,9 @@ class ChuangRuiYunAgent extends Agent implements TemplateSms, ContentSms, LogSms
                             $data['is_back']=1;
                             $data['tenant_id'] =  $model['tenant_id'];
                             $where = [
-                                'id' => $item['id'],
-                                'tenant_id' => $item['tenant_id'],
-                                'msgid' => $item['msgid'],
+                                'id' => $model['id'],
+                                'tenant_id' => $model['tenant_id'],
+                                'msgid' => $model['msgid'],
                             ];
                             self::updateRows($data,$where);
                         }
