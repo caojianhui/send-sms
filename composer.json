@@ -13,8 +13,8 @@
         "toplan/task-balancer": "~0.5",
         "guzzlehttp/guzzle": "^6.5",
         "aliyun/aliyun-tablestore-sdk-php": "^5.0",
-        "jeremeamia/superclosure": "^2.2",
-        "monolog/monolog": "^2.0"
+        "jeremeamia/superclosure": "^2.2"
+//        "monolog/monolog": "^2.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^6.0.0"
