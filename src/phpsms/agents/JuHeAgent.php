@@ -1,6 +1,9 @@
 <?php
 
-namespace Send\PhpSms;
+namespace Send\PhpSms\Agents;
+
+use Send\PhpSms\Interfaces\TemplateSms;
+use Send\PhpSms\Interfaces\VoiceCode;
 
 /**
  * Class JuHeAgent

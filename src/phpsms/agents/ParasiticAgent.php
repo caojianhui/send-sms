@@ -1,6 +1,13 @@
 <?php
 
-namespace Send\PhpSms;
+namespace Send\PhpSms\Agents;
+
+use Send\PhpSms\Interfaces\ContentSms;
+use Send\PhpSms\Interfaces\ContentVoice;
+use Send\PhpSms\Interfaces\FileVoice;
+use Send\PhpSms\Interfaces\TemplateSms;
+use Send\PhpSms\Interfaces\TemplateVoice;
+use Send\PhpSms\Interfaces\VoiceCode;
 
 /**
  * Class ParasiticAgent

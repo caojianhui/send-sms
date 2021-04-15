@@ -1,6 +1,8 @@
 <?php
 
-namespace Send\PhpSms;
+namespace Send\PhpSms\Agents;
+
+use Send\PhpSms\Interfaces\TemplateSms;
 
 /**
  * Class AliyunAgent

@@ -2,8 +2,9 @@
 
 namespace Send\PhpSms;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+//use Illuminate\Support\Facades\DB;
+//use Illuminate\Support\Facades\Schema;
+use Send\PhpSms\Agents\ParasiticAgent;
 use Send\PhpSms\Traits\TableStoreTrait;
 use Toplan\TaskBalance\Driver;
 use Toplan\TaskBalance\Task;
@@ -176,7 +177,7 @@ class Sms
      */
     protected static function configure()
     {
-        $config = ;
+        $config = [];
         if (!count(self::scheme())) {
             self::initScheme($config);
         }
@@ -306,7 +307,7 @@ class Sms
             if (isset($options['scheme'])) {
                 unset($options['scheme']);
             }
-            $className = "Send\\PhpSms\\{$name}Agent";
+            $className = "Send\\PhpSms\\Agents\\{$name}Agent";
             if (isset($options['agentClass'])) {
                 $className = $options['agentClass'];
                 unset($options['agentClass']);

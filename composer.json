@@ -21,17 +21,11 @@
     },
     "autoload": {
         "psr-4": {
-            "Send\\PhpSms\\": [
-                "src/phpsms/",
-                "src/phpsms/agents/",
-                "src/phpsms/interfaces/"
-            ],
-            "Send\\PhpSms\\Facades\\": [
-                "src/phpsms/facades/"
-            ],
-            "Send\\PhpSms\\Traits\\": [
-                "src/phpsms/traits/"
-            ]
+            "Send\\PhpSms\\": "src/phpsms/", 
+            "Send\\PhpSms\\Agents\\":  "src/phpsms/agents/", 
+            "Send\\PhpSms\\Interfaces\\":  "src/phpsms/interfaces/", 
+            "Send\\PhpSms\\Facades\\":  "src/phpsms/facades/",
+            "Send\\PhpSms\\Traits\\":  "src/phpsms/traits/"
         },
         "classmap": [
             "src/phpsms/lib/"

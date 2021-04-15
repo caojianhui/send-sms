@@ -1,6 +1,6 @@
 <?php
 
-namespace Send\PhpSms;
+namespace Send\PhpSms\Agents;
 
 
 use GuzzleHttp\Client;
@@ -10,7 +10,12 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Send\PhpSms\AcceptLogSms;
+use Send\PhpSms\Interfaces\AcceptLogSms;
+use Send\PhpSms\Interfaces\BalanceSms;
+use Send\PhpSms\Interfaces\ClientSms;
+use Send\PhpSms\Interfaces\ContentSms;
+use Send\PhpSms\Interfaces\LogSms;
+use Send\PhpSms\Interfaces\ReportSms;
 
 
 class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, ReportSms, BalanceSms,AcceptLogSms
