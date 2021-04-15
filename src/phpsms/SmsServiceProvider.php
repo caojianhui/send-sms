@@ -42,7 +42,7 @@ class SmsServiceProvider extends ServiceProvider
         }
         $this->mergeConfigFrom(__DIR__ . '/../config/sendsms.php', 'sendsms');
 
-        $this->app->singleton('Send\\Sms\\Sms', function () {
+        $this->app->singleton('Send\\PhpSms\\Sms', function () {
             Sms::scheme(config('sendsms.scheme', []));
             Sms::config(config('sendsms.agents', []));
 

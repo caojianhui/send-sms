@@ -176,7 +176,7 @@ class Sms
      */
     protected static function configure()
     {
-        $config = [];
+        $config = ;
         if (!count(self::scheme())) {
             self::initScheme($config);
         }
@@ -194,7 +194,7 @@ class Sms
      */
     protected static function initScheme(array &$config)
     {
-        $config = empty($config) ? include __DIR__ . '/../config/sendsms.php' : $config;
+        $config = empty($config) ? include  config_path('sendsms.php') : $config;
         $scheme = isset($config['scheme']) ? $config['scheme'] : [];
         self::scheme($scheme);
     }
@@ -210,7 +210,7 @@ class Sms
         if (empty($agents)) {
             return;
         }
-        $config = empty($config) ? include __DIR__ . '/../config/sendsms.php' : $config;
+        $config = empty($config) ? include  config_path('sendsms.php') : $config;
         $agentsConfig = isset($config['agents']) ? $config['agents'] : [];
         foreach ($agents as $name) {
             $agentConfig = isset($agentsConfig[$name]) ? $agentsConfig[$name] : [];
