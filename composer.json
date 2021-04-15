@@ -1,5 +1,5 @@
 {
-    "name": "send/sms",
+    "name": "send/phpsms",
     "description": "创蓝和创瑞云接口整合",
     "type": "library",
     "authors": [
@@ -20,19 +20,20 @@
     },
     "autoload": {
         "psr-4": {
-            "Send\\Sms\\": [
-                "src/sms/",
-                "src/sms/agents/"
+            "Send\\PhpSms\\": [
+                "src/phpsms/",
+                "src/phpsms/agents/",
+                "src/phpsms/interfaces/"
             ],
-            "Send\\Sms\\Facades\\": [
-                "src/sms/facades/"
+            "Send\\PhpSms\\Facades\\": [
+                "src/phpsms/facades/"
             ],
-            "Send\\Sms\\Trait\\": [
-                "src/sms/traits/"
+            "Send\\PhpSms\\Traits\\": [
+                "src/phpsms/traits/"
             ]
         },
         "classmap": [
-            "src/sms/lib/"
+            "src/phpsms/lib/"
         ]
     },
     "autoload-dev": {

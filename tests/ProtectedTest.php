@@ -1,6 +1,6 @@
 <?php
 
-use Send\Sms\Sms;
+use Send\PhpSms\Sms;
 
 class ProtectedTest extends PHPUnit_Framework_TestCase
 {

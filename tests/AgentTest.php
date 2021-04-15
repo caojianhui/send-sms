@@ -1,8 +1,8 @@
 <?php
 
-use Send\Sms\Agent;
-use Send\Sms\LogAgent;
-use Send\Sms\ParasiticAgent;
+use Send\PhpSms\Agent;
+use Send\PhpSms\LogAgent;
+use Send\PhpSms\ParasiticAgent;
 
 class AgentTest extends PHPUnit_Framework_TestCase
 {
