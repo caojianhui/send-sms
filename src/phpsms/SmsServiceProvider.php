@@ -57,6 +57,6 @@ class SmsServiceProvider extends ServiceProvider
      */
     public function provides()
     {
-        return ['Send\\Sms\\Sms'];
+        return ['Send\\PhpSms\\Sms'];
     }
 }
