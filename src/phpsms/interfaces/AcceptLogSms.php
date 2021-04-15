@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Send\PhpSms\sms\interfaces;
+namespace Send\PhpSms;
 
 
 interface AcceptLogSms

@@ -306,7 +306,7 @@ class Sms
             if (isset($options['scheme'])) {
                 unset($options['scheme']);
             }
-            $className = "Send\\Sms\\{$name}Agent";
+            $className = "Send\\PhpSms\\{$name}Agent";
             if (isset($options['agentClass'])) {
                 $className = $options['agentClass'];
                 unset($options['agentClass']);

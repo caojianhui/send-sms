@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use Send\PhpSms\sms\interfaces\AcceptLogSms;
+use Send\PhpSms\AcceptLogSms;
 
 
 class ChuangLanAgent extends Agent implements ContentSms, LogSms, ClientSms, ReportSms, BalanceSms,AcceptLogSms

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use Send\PhpSms\sms\interfaces\AcceptLogSms;
+use Send\PhpSms\AcceptLogSms;
 use Send\PhpSms\Traits\TableStoreTrait;
 use Send\PhpSms\Util;
 
