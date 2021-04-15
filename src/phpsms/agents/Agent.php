@@ -357,6 +357,7 @@ abstract class Agent
 
     public function log($data)
     {
+        if (config('sendsms.log_channel')==false) return true;
         $config = config('sendsms.log');
         if ($config['channel'] == self::LOG_DATABASE_CHANNEL) {
             if (Schema::hasTable('sms_logs')) {
